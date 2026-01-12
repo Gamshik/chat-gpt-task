@@ -1,5 +1,5 @@
-import { IMessageQueries } from "@/contracts/db";
-import { ICreateMessageDTO, IMessageModel } from "@/types";
+import { IMessageQueries } from "@contracts";
+import { ICreateMessageDTO, IMessageModel } from "@models";
 import chatDb from "../database";
 
 export const messageQueries: IMessageQueries = {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { messageQueries } from "@/lib/db/queries/message.queries";
+import { messageQueries } from "@db";
 
 export async function GET(
   request: Request,

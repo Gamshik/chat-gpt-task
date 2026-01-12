@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { initDb } from "@db/schema";
+import { initDb } from "@db";
 
 // interface IGlobalWithDb {
 //   _db?: Database;

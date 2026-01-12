@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { threadQueries } from "@/lib/db/queries/thread.queries";
+import { threadQueries } from "@db";
 
 export async function GET() {
   try {

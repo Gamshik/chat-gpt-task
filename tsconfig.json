@@ -20,10 +20,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@db/*": ["./src/lib/db/*"],
-      "@types/*": ["./src/types/*"],
-      "@contracts/*": ["./src/contracts/*"]
+      "@db": ["./src/lib/db/index"],
+      "@models": ["./src/models/index"],
+      "@contracts": ["./src/contracts/index"],
+      "@components/*": ["./src/components/*"]
     }
   },
   "include": [

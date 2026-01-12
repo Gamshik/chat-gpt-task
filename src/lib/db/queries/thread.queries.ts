@@ -1,5 +1,5 @@
-import { IThreadQueries } from "@/contracts/db";
-import { ICreateThreadDTO, IThreadModel } from "@/types";
+import { IThreadQueries } from "@contracts";
+import { ICreateThreadDTO, IThreadModel } from "@models";
 import chatDb from "../database";
 
 export const threadQueries: IThreadQueries = {

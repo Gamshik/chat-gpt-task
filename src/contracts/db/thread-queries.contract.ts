@@ -1,4 +1,4 @@
-import { IThreadModel, ICreateThreadDTO } from "@/types/thread";
+import { IThreadModel, ICreateThreadDTO } from "@models";
 
 export interface IThreadQueries {
   create(dto: ICreateThreadDTO): string;
