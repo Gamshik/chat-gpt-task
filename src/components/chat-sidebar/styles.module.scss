@@ -1,0 +1,53 @@
+.chatSidebarContainer {
+  height: 100%;
+  width: 260px;
+  background: #ebebeb;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+
+  .newChatBtn {
+    padding: 5px;
+    border: 1px solid #a3a3a3;
+    background: transparent;
+    color: #252525;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    &:hover {
+      background: #d6d6d6d7;
+    }
+  }
+
+  .threadList {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    padding: 0 5px;
+
+    .threadBtn {
+      padding: 8px 20px 8px 8px;
+      cursor: pointer;
+      border-radius: 8px;
+      background: none;
+      border: none;
+
+      color: #252525;
+      font-weight: 400;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: start;
+
+      &.active {
+        box-shadow: 0 2px 5px #797979;
+      }
+      &:hover {
+        background: #d6d6d6d7;
+      }
+    }
+  }
+}

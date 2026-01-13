@@ -1,0 +1,43 @@
+.chatInputContainer {
+  width: 100%;
+  border-radius: 10px;
+  padding: 8px 0;
+  overflow: hidden;
+
+  .chatInput {
+    background: none;
+    border: none;
+    width: 100%;
+    max-height: 150px;
+    padding: 2px 10px;
+    resize: none;
+    overflow-y: auto;
+    outline: none;
+
+    /* Для Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #bebebe transparent;
+
+    /* Для Chrome, Edge, Safari */
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #bebebe;
+      border-radius: 3px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      cursor: pointer;
+      background: #afafaf;
+    }
+
+    line-height: 1.5;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2b2b2b;
+  }
+}
