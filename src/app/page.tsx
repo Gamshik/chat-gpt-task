@@ -40,6 +40,7 @@ export default function Page() {
           queueMicrotask(() => {
             setActiveThreadId(serverThreadId);
             fetchThreads();
+            loadThreadMessages(serverThreadId);
           });
         }
 
