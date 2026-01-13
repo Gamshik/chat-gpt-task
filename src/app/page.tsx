@@ -11,6 +11,7 @@ import { ChatInput } from "@components/chat-input";
 import clsx from "clsx";
 import { MarkdownText } from "@components/markdown-text";
 import { ChatSidebar } from "@components/chat-sidebar";
+import { useSearchParams, useRouter } from "next/navigation";
 
 type TransportFetch = NonNullable<
   HttpChatTransportInitOptions<UIMessage>["fetch"]
@@ -22,6 +23,29 @@ export default function Page() {
   const [threads, setThreads] = useState<IThreadModel[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const threadIdFromQuery = searchParams.get("thread");
+    if (threadIdFromQuery && threadIdFromQuery !== activeThreadId) {
+      setActiveThreadId(threadIdFromQuery);
+      loadThreadMessages(threadIdFromQuery);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (activeThreadId) {
+      params.set("thread", activeThreadId);
+    } else {
+      params.delete("thread");
+    }
+
+    router.replace(`${window.location.pathname}?${params.toString()}`);
+  }, [activeThreadId, router]);
 
   // TODO: инкапсулировать в кастомном хуке
   const { messages, sendMessage, setMessages } = useChat<UIMessage>({
