@@ -8,11 +8,8 @@ import {
 } from "ai";
 import { threadQueries, messageQueries } from "@db";
 import { z } from "zod";
-import {
-  IDeleteThreadResult,
-  IShowStockPriceResult,
-  HIGHLIGHT_SECTIONS,
-} from "@app/interfaces";
+import { IDeleteThreadResult, IShowStockPriceResult } from "@app/interfaces";
+import { Headers, HighlightSections } from "@app/constants";
 
 export async function POST(request: Request) {
   const { messages, threadId }: { messages: UIMessage[]; threadId?: string } =
@@ -66,7 +63,7 @@ export async function POST(request: Request) {
       highlightSection: tool({
         description: "Подсветить визуально секцию интерфейса",
         inputSchema: z.object({
-          section: z.enum(HIGHLIGHT_SECTIONS),
+          section: z.enum(Object.values(HighlightSections)),
           color: z.string().describe("CSS цвет"),
         }),
       }),
@@ -94,8 +91,8 @@ export async function POST(request: Request) {
 
   return result.toUIMessageStreamResponse({
     headers: {
-      "x-thread-id": currentThreadId,
-      "Access-Control-Expose-Headers": "x-thread-id",
+      [Headers.threadId]: currentThreadId,
+      "Access-Control-Expose-Headers": Headers.threadId,
     },
   });
 }

@@ -7,7 +7,6 @@ import SendMsgIcon from "@public/icons/send-msg.svg";
 import styles from "./page.module.scss";
 import {
   DefaultChatTransport,
-  HttpChatTransportInitOptions,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
 import { IThreadModel } from "@models";
@@ -16,15 +15,15 @@ import clsx from "clsx";
 import { MarkdownText } from "@components/markdown-text";
 import { ChatSidebar } from "@components/chat-sidebar";
 import { useSearchParams, useRouter } from "next/navigation";
+import { IHighlightSectionData, IShowStockPriceResult } from "@app/interfaces";
+import { TransportFetchType } from "@app/types";
 import {
   HighlightSectionType,
-  IHighlightSectionData,
-  IShowStockPriceResult,
-} from "@app/interfaces";
-
-type TransportFetch = NonNullable<
-  HttpChatTransportInitOptions<UIMessage>["fetch"]
->;
+  Headers,
+  QueryParams,
+  HighlightSections,
+  ApiRoutes,
+} from "@app/constants";
 
 export default function Page() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -40,32 +39,63 @@ export default function Page() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    const threadIdFromQuery = searchParams.get("thread");
-    if (threadIdFromQuery && threadIdFromQuery !== activeThreadId) {
-      setActiveThreadId(threadIdFromQuery);
-      loadThreadMessages(threadIdFromQuery);
+  /**
+   * Возвращает стили для подсветки секции
+   *
+   * @param sectionName секция для подсветки
+   * @returns CSS стили
+   */
+  const getHighlightStyle = (sectionName: HighlightSectionType) => {
+    if (highlight?.section === sectionName) {
+      return {
+        boxShadow: `0 0 0 4px ${highlight.color}`,
+        transition: "all 0.3s ease-in-out",
+      };
     }
-  }, [searchParams]);
+    return {};
+  };
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+  /**
+   * Загружает свежие треды
+   */
+  const loadThreads = async () => {
+    const res = await fetch(ApiRoutes.getAllThreads);
+    const data = await res.json();
+    setThreads(data);
+  };
 
-    if (activeThreadId) {
-      params.set("thread", activeThreadId);
-    } else {
-      params.delete("thread");
-    }
+  /**
+   * Загружает сообщения треда
+   *
+   * @param threadId айди треда
+   */
+  const loadThreadMessages = async (threadId: string) => {
+    setActiveThreadId(threadId);
+    const res = await fetch(ApiRoutes.getAllThreadMessages(threadId));
+    const data = await res.json();
+    setMessages(data);
+  };
 
-    router.replace(`${window.location.pathname}?${params.toString()}`);
-  }, [activeThreadId, router]);
+  /**
+   * Обработчик отправки сообщения
+   */
+  const onMsgSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-  useEffect(() => {
-    if (highlight) {
-      const timer = setTimeout(() => setHighlight(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [highlight]);
+    if (!inputValue.trim()) return;
+
+    sendMessage({ text: inputValue });
+    setInputValue("");
+  };
+
+  /**
+   * Обрабатывает создание нового чата
+   */
+  const handleCreateNewChat = () => {
+    setActiveThreadId(null);
+    setMessages([]);
+    setInputValue("");
+  };
 
   const {
     messages,
@@ -83,17 +113,17 @@ export default function Page() {
       }),
       fetch: (async (input: string | URL | Request, init?: RequestInit) => {
         const response = await fetch(input, init);
-        const serverThreadId = response.headers.get("x-thread-id");
+        const serverThreadId = response.headers.get(Headers.threadId);
 
         if (serverThreadId && !activeThreadId) {
           queueMicrotask(() => {
             setActiveThreadId(serverThreadId);
-            fetchThreads();
+            loadThreads();
             loadThreadMessages(serverThreadId);
           });
         }
         return response;
-      }) as TransportFetch,
+      }) as TransportFetchType,
     }),
     async onToolCall({ toolCall }) {
       if (toolCall.dynamic) return;
@@ -112,51 +142,51 @@ export default function Page() {
     },
   });
 
-  const getHighlightStyle = (sectionName: HighlightSectionType) => {
-    if (highlight?.section === sectionName) {
-      return {
-        boxShadow: `0 0 0 4px ${highlight.color}`,
-        transition: "all 0.3s ease-in-out",
-      };
-    }
-    return {};
-  };
-
-  const fetchThreads = async () => {
-    const res = await fetch("/api/threads");
-    const data = await res.json();
-    setThreads(data);
-  };
-
-  const loadThreadMessages = async (id: string) => {
-    setActiveThreadId(id);
-    const res = await fetch(`/api/threads/${id}/messages`);
-    const data = await res.json();
-    setMessages(data);
-  };
-
-  const onMsgSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!inputValue.trim()) return;
-    sendMessage({ text: inputValue });
-    setInputValue("");
-  };
-
-  const handleNewChat = () => {
-    setActiveThreadId(null);
-    setMessages([]);
-    setInputValue("");
-  };
-
+  // при инициализации подгружает все треды
   useEffect(() => {
-    fetchThreads();
+    loadThreads();
   }, []);
 
+  // реагирует на смену query параметров
+  useEffect(() => {
+    const threadIdFromQuery = searchParams.get(QueryParams.threadId);
+
+    if (threadIdFromQuery && threadIdFromQuery !== activeThreadId) {
+      setActiveThreadId(threadIdFromQuery);
+      loadThreadMessages(threadIdFromQuery);
+    }
+  }, [searchParams]);
+
+  // обновляет query параметры
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (activeThreadId) {
+      params.set(QueryParams.threadId, activeThreadId);
+    } else {
+      params.delete(QueryParams.threadId);
+    }
+
+    router.replace(`${window.location.pathname}?${params.toString()}`);
+  }, [activeThreadId]);
+
+  // сбрасывает подсветку через 3 секунды
+  useEffect(() => {
+    if (highlight) {
+      const timer = setTimeout(() => setHighlight(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlight]);
+
+  // вешает observer на контейнер с сообщениями
   useEffect(() => {
     const container = messagesContainerRef.current;
+
     if (!container) return;
 
     const observer = new MutationObserver(() => {
+      // TODO: эту логику нужно делать нормальной для более сложного чата
+      // скроллим вниз при появлении нового сообщения
       container.scrollTop = container.scrollHeight;
     });
 
@@ -170,16 +200,19 @@ export default function Page() {
 
   return (
     <div className={styles.container}>
-      <aside style={getHighlightStyle("sidebar")}>
+      <aside style={getHighlightStyle(HighlightSections.sidebar)}>
         <ChatSidebar
           threads={threads}
           activeThreadId={activeThreadId}
-          onNewChatClick={handleNewChat}
+          onNewChatClick={handleCreateNewChat}
           onSelectThread={loadThreadMessages}
         />
       </aside>
 
-      <main className={styles.chatArea} style={getHighlightStyle("chat")}>
+      <main
+        className={styles.chatArea}
+        style={getHighlightStyle(HighlightSections.chat)}
+      >
         <div ref={messagesContainerRef} className={styles.messagesContainer}>
           {messages.map((m) => (
             <div
@@ -267,7 +300,7 @@ export default function Page() {
         <form
           onSubmit={onMsgSubmit}
           className={styles.inputFormContainer}
-          style={getHighlightStyle("input")}
+          style={getHighlightStyle(HighlightSections.input)}
         >
           <ChatInput
             value={inputValue}
