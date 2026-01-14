@@ -2,7 +2,13 @@ import { openai } from "@ai-sdk/openai";
 import { streamText, convertToModelMessages, UIMessage, stepCountIs } from "ai";
 import { threadQueries, messageQueries } from "@db";
 import { Headers } from "@app/constants";
-import { deleteThread, highlightSection, showStockPrice } from "@app/ai-tools";
+import {
+  deleteThread,
+  getTableRange,
+  highlightSection,
+  showStockPrice,
+  updateTableCell,
+} from "@app/ai-tools";
 
 export async function POST(request: Request) {
   const { messages, threadId }: { messages: UIMessage[]; threadId?: string } =
@@ -41,6 +47,8 @@ export async function POST(request: Request) {
       showStockPrice,
       highlightSection,
       deleteThread,
+      getTableRange,
+      updateTableCell,
     },
     onFinish: async ({ text }) => {
       if (text) {
