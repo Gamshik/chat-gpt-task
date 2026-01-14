@@ -10,7 +10,7 @@ export const ChatSidebar: ChatSidebarType = ({
 }) => (
   <div className={styles.chatSidebarContainer}>
     <button className={styles.newChatBtn} onClick={onNewChatClick}>
-      + New Chat
+      + Новый чат
     </button>
     <div className={styles.threadList}>
       {threads.map((t) => (

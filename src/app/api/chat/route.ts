@@ -1,15 +1,8 @@
 import { openai } from "@ai-sdk/openai";
-import {
-  streamText,
-  convertToModelMessages,
-  UIMessage,
-  stepCountIs,
-  tool,
-} from "ai";
+import { streamText, convertToModelMessages, UIMessage, stepCountIs } from "ai";
 import { threadQueries, messageQueries } from "@db";
-import { z } from "zod";
-import { IDeleteThreadResult, IShowStockPriceResult } from "@app/interfaces";
-import { Headers, HighlightSections } from "@app/constants";
+import { Headers } from "@app/constants";
+import { deleteThread, highlightSection, showStockPrice } from "@app/ai-tools";
 
 export async function POST(request: Request) {
   const { messages, threadId }: { messages: UIMessage[]; threadId?: string } =
@@ -45,47 +38,9 @@ export async function POST(request: Request) {
     messages: await convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
     tools: {
-      showStockPrice: tool({
-        description: "Показать текущую цену акции или криптовалюты",
-        inputSchema: z.object({
-          symbol: z.string().describe("Тикер актива, например BTC или AAPL"),
-        }),
-        execute: async ({ symbol }): Promise<IShowStockPriceResult> => {
-          const price = Math.floor(Math.random() * 50000) + 100;
-          const change = Number((Math.random() * 10 - 5).toFixed(2));
-
-          return {
-            symbol,
-            price,
-            change,
-            lastUpdated: new Date().toISOString(),
-          };
-        },
-      }),
-
-      highlightSection: tool({
-        description: "Подсветить/выделить визуально секцию интерфейса",
-        inputSchema: z.object({
-          section: z
-            .enum(Object.values(HighlightSections))
-            .describe("Секция, которую пользователь хочет подсветить/выделить"),
-          color: z.string().describe("CSS цвет"),
-        }),
-      }),
-
-      deleteThread: tool({
-        needsApproval: true,
-        description: "Удалить тред из базы данных.",
-        inputSchema: z.object({
-          threadId: z
-            .string()
-            .describe("Id треда, который пользователь хочет удалить"),
-        }),
-        execute: async ({ threadId }): Promise<IDeleteThreadResult> => {
-          threadQueries.delete(threadId);
-          return { deletedId: threadId, message: "Тред успешно удален" };
-        },
-      }),
+      showStockPrice,
+      highlightSection,
+      deleteThread,
     },
     onFinish: async ({ text }) => {
       if (text) {
