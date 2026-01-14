@@ -4,6 +4,7 @@ import { threadQueries, messageQueries } from "@db";
 import { Headers } from "@app/constants";
 import {
   deleteThread,
+  explainTableFormula,
   getTableRange,
   highlightSection,
   showStockPrice,
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       deleteThread,
       getTableRange,
       updateTableCell,
+      explainTableFormula,
     },
     onFinish: async ({ text }) => {
       if (text) {

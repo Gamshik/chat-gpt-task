@@ -5,7 +5,7 @@ import path from "path";
 import { parseTableTargetCell } from "./utils";
 import { USERS_TABLE_PATH } from "@app/constants";
 
-export const explainFormulaTool = createTool({
+export const explainTableFormula = createTool({
   description:
     "Получить формулу из Excel ячейки и объяснить, как вычисляется её значение",
 
