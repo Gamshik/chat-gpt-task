@@ -135,9 +135,9 @@ export default function Page() {
       if (toolCall.dynamic) return;
 
       if (toolCall.toolName === "highlightSection") {
-        const args = toolCall.input as IHighlightSectionData;
+        const { section, color } = toolCall.input as IHighlightSectionData;
 
-        setHighlight({ section: args.section, color: args.color });
+        setHighlight({ section, color });
 
         addToolOutput({
           tool: "highlightSection",
@@ -236,14 +236,17 @@ export default function Page() {
 
                     case "tool-showStockPrice": {
                       const callId = part.toolCallId;
+
                       if (part.state === "output-available") {
                         const output = part.output as IShowStockPriceResult;
+
                         return (
                           <div key={callId} className={styles.stockWidget}>
                             <b>{output.symbol}</b>: ${output.price}
                           </div>
                         );
                       }
+
                       return <div key={callId}>Загрузка котировок...</div>;
                     }
 

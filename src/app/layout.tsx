@@ -1,4 +1,4 @@
-import { ubuntu } from "./fonts";
+import { ubuntu } from "./config/fonts";
 
 import type { Metadata } from "next";
 import "./globals.css";
