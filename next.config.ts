@@ -5,10 +5,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["bun:sqlite"],
   turbopack: {
     rules: {
-      // Описываем правило для SVG
       "*.svg": {
         loaders: ["@svgr/webpack"],
-        as: "*.js", // Говорим турбопаку трактовать это как JS компонент
+        as: "*.js",
       },
     },
   },

@@ -16,6 +16,8 @@ export async function POST(request: Request) {
     await request.json();
 
   let currentThreadId = threadId;
+
+  // если не получили Id: создаём новый тред
   if (!currentThreadId) {
     const firstText =
       messages[0]?.parts.find((p) => p.type === "text")?.text || "Новый чат";
@@ -24,6 +26,7 @@ export async function POST(request: Request) {
     });
   }
 
+  // сохраняем в бд последнее сообщение
   const lastUserMessage = messages[messages.length - 1];
   const userContent = lastUserMessage.parts
     .filter((p) => p.type === "text")
@@ -61,9 +64,11 @@ export async function POST(request: Request) {
       }),
 
       highlightSection: tool({
-        description: "Подсветить визуально секцию интерфейса",
+        description: "Подсветить/выделить визуально секцию интерфейса",
         inputSchema: z.object({
-          section: z.enum(Object.values(HighlightSections)),
+          section: z
+            .enum(Object.values(HighlightSections))
+            .describe("Секция, которую пользователь хочет подсветить/выделить"),
           color: z.string().describe("CSS цвет"),
         }),
       }),
@@ -71,7 +76,11 @@ export async function POST(request: Request) {
       deleteThread: tool({
         needsApproval: true,
         description: "Удалить тред из базы данных.",
-        inputSchema: z.object({ threadId: z.string() }),
+        inputSchema: z.object({
+          threadId: z
+            .string()
+            .describe("Id треда, который пользователь хочет удалить"),
+        }),
         execute: async ({ threadId }): Promise<IDeleteThreadResult> => {
           threadQueries.delete(threadId);
           return { deletedId: threadId, message: "Тред успешно удален" };

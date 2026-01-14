@@ -26,12 +26,17 @@ import {
 } from "@app/constants";
 
 export default function Page() {
+  /** ссылка на контейнер сообщений */
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
+  // списко тредов
   const [threads, setThreads] = useState<IThreadModel[]>([]);
+  // Id текущего треда
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  // сообщение, которое вводит пользователь
   const [inputValue, setInputValue] = useState("");
 
+  // конфиг текущей подсветки
   const [highlight, setHighlight] = useState<IHighlightSectionData | null>(
     null
   );
@@ -115,6 +120,7 @@ export default function Page() {
         const response = await fetch(input, init);
         const serverThreadId = response.headers.get(Headers.threadId);
 
+        // если создался новый тред
         if (serverThreadId && !activeThreadId) {
           queueMicrotask(() => {
             setActiveThreadId(serverThreadId);
@@ -184,8 +190,8 @@ export default function Page() {
 
     if (!container) return;
 
+    // TODO: эту логику нужно делать нормальной для более сложного чата
     const observer = new MutationObserver(() => {
-      // TODO: эту логику нужно делать нормальной для более сложного чата
       // скроллим вниз при появлении нового сообщения
       container.scrollTop = container.scrollHeight;
     });
