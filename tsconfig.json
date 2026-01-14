@@ -21,6 +21,7 @@
     ],
     "paths": {
       "@public/*": ["./public/*"],
+      "@app/*": ["./src/app/*"],
       "@db": ["./src/lib/db/index"],
       "@models": ["./src/models/index"],
       "@contracts": ["./src/contracts/index"],
