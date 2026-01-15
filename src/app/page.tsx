@@ -15,7 +15,11 @@ import clsx from "clsx";
 import { MarkdownText } from "@components/markdown-text";
 import { ChatSidebar } from "@components/chat-sidebar";
 import { useSearchParams, useRouter } from "next/navigation";
-import { IHighlightSectionData, IShowStockPriceResult } from "@app/interfaces";
+import {
+  IHighlightSectionData,
+  ISendChatMessageParams,
+  IShowStockPriceResult,
+} from "@app/interfaces";
 import { TransportFetchType } from "@app/types";
 import {
   HighlightSectionType,
@@ -114,7 +118,10 @@ export default function Page() {
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     transport: new DefaultChatTransport({
       prepareSendMessagesRequest: ({ messages }) => ({
-        body: { messages, threadId: activeThreadId },
+        body: {
+          message: messages.at(-1),
+          threadId: activeThreadId,
+        } as ISendChatMessageParams,
       }),
       fetch: (async (input: string | URL | Request, init?: RequestInit) => {
         const response = await fetch(input, init);

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { messageQueries } from "@db";
+import { messageModelToUi } from "@app/utils";
+import { UIMessage } from "ai";
 
 export async function GET(
   _: Request,
@@ -10,11 +12,9 @@ export async function GET(
 
     const messages = messageQueries.getByThreadId(id);
 
-    const uiMessages = messages.map((m) => ({
-      id: m.id.toString(),
-      role: m.role,
-      parts: [{ type: "text", text: m.content }],
-    }));
+    const uiMessages = messages
+      .map((m) => messageModelToUi(m))
+      .filter((m): m is UIMessage => m !== null);
 
     return NextResponse.json(uiMessages);
   } catch (error) {
