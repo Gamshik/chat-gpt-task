@@ -1,17 +1,24 @@
-import { ChatSidebarType } from "./types";
 import styles from "./styles.module.scss";
 import clsx from "clsx";
+import CloseSidebarIcon from "@public/icons/toggle-sidebar.svg";
+import { IChatSidebarProps } from "./interfaces";
 
-export const ChatSidebar: ChatSidebarType = ({
+export const ChatSidebar = ({
   threads,
   activeThreadId,
-  onNewChatClick,
+  onClose,
+  onNewChat,
   onSelectThread,
-}) => (
+}: IChatSidebarProps) => (
   <div className={styles.chatSidebarContainer}>
-    <button className={styles.newChatBtn} onClick={onNewChatClick}>
-      + Новый чат
-    </button>
+    <div className={styles.headerContainer}>
+      <button className={styles.newChatBtn} onClick={onNewChat}>
+        + Новый чат
+      </button>
+      <button className={styles.closeSidebarBtn} onClick={onClose}>
+        <CloseSidebarIcon />
+      </button>
+    </div>
     <div className={styles.threadList}>
       {threads.map((t) => (
         <button

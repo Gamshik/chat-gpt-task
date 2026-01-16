@@ -3,10 +3,12 @@
 import { UIMessage, useChat } from "@ai-sdk/react";
 import { useState, useEffect, FormEvent, useRef } from "react";
 import SendMsgIcon from "@public/icons/send-msg.svg";
+import OpenSidebarIcon from "@public/icons/toggle-sidebar.svg";
 
-import styles from "./page.module.scss";
+import styles from "./styles.module.scss";
 import {
   DefaultChatTransport,
+  HttpChatTransportInitOptions,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
 import { IThreadModel } from "@models";
@@ -14,13 +16,8 @@ import { ChatInput } from "@components/chat-input";
 import clsx from "clsx";
 import { MarkdownText } from "@components/markdown-text";
 import { ChatSidebar } from "@components/chat-sidebar";
-import { useSearchParams, useRouter } from "next/navigation";
-import {
-  IHighlightSectionData,
-  ISendChatMessageParams,
-  IShowStockPriceResult,
-} from "@app/interfaces";
-import { TransportFetchType } from "@app/types";
+import { useRouter } from "next/navigation";
+import { ISendChatMessageParams, IShowStockPriceResult } from "@app/interfaces";
 import {
   HighlightSectionType,
   Headers,
@@ -28,10 +25,28 @@ import {
   HighlightSections,
   ApiRoutes,
 } from "@app/constants";
+import { useResizeWindow } from "@app/hooks";
+
+//#region types/interfaces
+
+type TransportFetchType = NonNullable<
+  HttpChatTransportInitOptions<UIMessage>["fetch"]
+>;
+
+interface IHighlightSectionData {
+  section: HighlightSectionType;
+  color: string;
+}
+
+//#endregion
 
 export default function Page() {
   /** ссылка на контейнер сообщений */
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  /** ссылка на контейнер сайдбара */
+  const sidebarContainerRef = useRef<HTMLDivElement>(null);
+  /** ссылка на кнопку для открытия сайдбара */
+  const openSidebarBtnRef = useRef<HTMLButtonElement>(null);
 
   // списко тредов
   const [threads, setThreads] = useState<IThreadModel[]>([]);
@@ -44,9 +59,15 @@ export default function Page() {
   const [highlight, setHighlight] = useState<IHighlightSectionData | null>(
     null
   );
+  // флаг установки компонента
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+  // флаг состояния сайдбара
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+
+  const { isMobile } = useResizeWindow();
 
   const router = useRouter();
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
 
   /**
    * Возвращает стили для подсветки секции
@@ -116,6 +137,7 @@ export default function Page() {
     messages: [],
     id: activeThreadId || undefined,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
+    resume: true,
     transport: new DefaultChatTransport({
       prepareSendMessagesRequest: ({ messages }) => ({
         body: {
@@ -155,20 +177,51 @@ export default function Page() {
     },
   });
 
-  // при инициализации подгружает все треды
+  // инициализация
   useEffect(() => {
+    // загружаем тредлы
     loadThreads();
+
+    setIsMounted(true);
   }, []);
 
-  // реагирует на смену query параметров
+  // если в query изначально есть параметр threadId, загружаются сообщения
   useEffect(() => {
-    const threadIdFromQuery = searchParams.get(QueryParams.threadId);
+    const params = new URLSearchParams(window.location.search);
+    const threadIdFromQuery = params.get(QueryParams.threadId);
 
-    if (threadIdFromQuery && threadIdFromQuery !== activeThreadId) {
+    if (threadIdFromQuery) {
       setActiveThreadId(threadIdFromQuery);
       loadThreadMessages(threadIdFromQuery);
     }
-  }, [searchParams]);
+  }, []);
+
+  // меняет состояние сайдбара при сжатии/расширении окна
+  useEffect(() => {
+    setIsSidebarOpen(!isMobile);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (isMobile && isSidebarOpen) {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          sidebarContainerRef.current &&
+          !sidebarContainerRef.current.contains(event.target as Node) &&
+          (!openSidebarBtnRef ||
+            (openSidebarBtnRef.current &&
+              !openSidebarBtnRef.current.contains(event.target as Node)))
+        ) {
+          setIsSidebarOpen(false);
+        }
+      };
+
+      document.addEventListener("click", handleClickOutside);
+
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [isMobile, isSidebarOpen]);
 
   // обновляет query параметры
   useEffect(() => {
@@ -213,14 +266,46 @@ export default function Page() {
 
   return (
     <div className={styles.container}>
-      <aside style={getHighlightStyle(HighlightSections.sidebar)}>
-        <ChatSidebar
-          threads={threads}
-          activeThreadId={activeThreadId}
-          onNewChatClick={handleCreateNewChat}
-          onSelectThread={loadThreadMessages}
-        />
-      </aside>
+      {/* чтобы сайдбар не прыгал при инициализации на мобилке - рисуем только после инициализации */}
+      {isMounted && (
+        <>
+          {isMobile && (
+            <div
+              data-show={isSidebarOpen}
+              className={clsx(styles.overlay)}
+            ></div>
+          )}
+
+          <aside
+            ref={sidebarContainerRef}
+            data-open={isSidebarOpen}
+            style={getHighlightStyle(HighlightSections.sidebar)}
+            className={styles.sidebarContainer}
+          >
+            <ChatSidebar
+              threads={threads}
+              activeThreadId={activeThreadId}
+              onClose={() => setIsSidebarOpen(false)}
+              onNewChat={handleCreateNewChat}
+              onSelectThread={loadThreadMessages}
+            />
+          </aside>
+
+          {/* TODO: исправить user select */}
+          <div
+            data-open={!isSidebarOpen}
+            className={styles.openSidebarBtnContainer}
+          >
+            <button
+              ref={openSidebarBtnRef}
+              className={styles.openSidebarBtn}
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <OpenSidebarIcon />
+            </button>
+          </div>
+        </>
+      )}
 
       <main
         className={styles.chatArea}

@@ -6,6 +6,7 @@ import { aiTools } from "@app/ai-tools";
 import { MessageRole } from "@models";
 import { ISendChatMessageParams } from "@app/interfaces";
 import { messageModelToUi } from "@app/utils";
+import { createResumableStreamContext } from "resumable-stream";
 
 export async function POST(request: Request) {
   const { message, threadId }: ISendChatMessageParams = await request.json();
@@ -41,7 +42,19 @@ export async function POST(request: Request) {
 
   const result = streamText({
     model: openai("gpt-4o"),
-    system: "Ты помощник с доступом к инструментам.",
+    system: `
+      ## ТВОЯ РОЛЬ
+      Ты — интеллектуальный помощник внутри чат-приложения с доступом к инструментам.
+
+      ## ПОВЕДЕНИЕ
+      - Отвечай кратко и по делу.
+      - Если информации недостаточно — задай уточняющий вопрос.
+      - Не придумывай данные, которых нет.
+
+      ## ИЗМЕНЕНИЕ ДАННЫХ
+      - Любые действия, изменяющие или удаляющие данные, требуют подтверждения пользователя.
+      - Не выполняй изменения без явного запроса или подтверждения.
+    `,
     messages: await convertToModelMessages(uiMessages),
     stopWhen: stepCountIs(5),
     tools: aiTools,

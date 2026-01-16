@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
-import { ChatInputType } from "./types";
 import styles from "./styles.module.scss";
+import { IChatInputProps } from "./interfaces";
 
-export const ChatInput: ChatInputType = ({
+export const ChatInput = ({
   value,
   onChange,
   placeholder = "",
-}) => {
+}: IChatInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const autoResizeTextarea = () => {
