@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const highlightSection = createTool({
   description:
-    "Временно подсветить одну из секций пользовательского интерфейса " +
+    "Подсветить одну из секций пользовательского интерфейса " +
     "для привлечения внимания пользователя (например, chat, sidebar или input). " +
     "Используется только для визуального UI-отклика и не изменяет данные.",
 
@@ -12,12 +12,12 @@ export const highlightSection = createTool({
     section: z
       .enum(Object.values(HighlightSections))
       .describe(
-        "Секция интерфейса, которую нужно подсветить (sidebar, chat или input)"
+        "Секция интерфейса, которую нужно подсветить (sidebar, chat или input)",
       ),
     color: z
       .string()
       .describe(
-        "CSS-цвет подсветки (например: 'red', '#ff0000', 'rgba(255,0,0,0.4)')"
+        "CSS-цвет подсветки (например: 'red', '#ff0000', 'rgba(255,0,0,0.4)')",
       ),
   }),
 });

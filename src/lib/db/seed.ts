@@ -1,4 +1,5 @@
-import { threadQueries, messageQueries } from "./queries";
+import { MessageRole } from "@models";
+import { threadQueries, messageQueries, messagePartsQueries } from "./queries";
 
 const TOPICS = [
   "Проектирование БД",
@@ -29,7 +30,7 @@ const AI_MESSAGES = [
 ];
 
 async function seed() {
-  console.log("Начинаем генерацию масштабного сида...");
+  console.log("Начинаем генерацию сида...");
 
   try {
     for (const topic of TOPICS) {
@@ -37,29 +38,42 @@ async function seed() {
 
       const messageCount = Math.floor(Math.random() * 5) + 6;
 
-      console.log(`Создаем тред "${topic}" с ${messageCount} сообщениями...`);
-
       for (let i = 0; i < messageCount; i++) {
         const isUser = i % 2 === 0;
-
         const contentPool = isUser ? USER_MESSAGES : AI_MESSAGES;
-        let content =
+
+        // основная часть сообщения
+        let mainText =
           contentPool[Math.floor(Math.random() * contentPool.length)];
 
         if (Math.random() > 0.7) {
-          content +=
+          mainText +=
             " " + contentPool[Math.floor(Math.random() * contentPool.length)];
         }
 
-        messageQueries.create({
+        // создаём сообщение
+        const messageId = messageQueries.create({
           thread_id: threadId,
-          role: isUser ? "user" : "assistant",
-          content: content,
+          role: isUser ? MessageRole.User : MessageRole.Assistant,
+          parts: [
+            {
+              type: "text",
+              text: mainText,
+            },
+          ],
         });
+
+        // иногда добавляем дополнительную часть
+        if (Math.random() > 0.6) {
+          messagePartsQueries.create(messageId, {
+            type: "text",
+            text: "Дополнительная часть для примера.",
+          });
+        }
       }
     }
 
-    console.log("База успешно заполнена! Теперь чат выглядит солидно.");
+    console.log("База успешно заполнена! Чат готов к использованию.");
   } catch (error) {
     console.error("Ошибка при заполнении базы:", error);
   }

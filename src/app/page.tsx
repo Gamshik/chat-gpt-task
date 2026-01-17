@@ -57,7 +57,7 @@ export default function Page() {
 
   // конфиг текущей подсветки
   const [highlight, setHighlight] = useState<IHighlightSectionData | null>(
-    null
+    null,
   );
   // флаг установки компонента
   const [isMounted, setIsMounted] = useState<boolean>(false);
@@ -102,7 +102,7 @@ export default function Page() {
   const loadThreadMessages = async (threadId: string) => {
     setActiveThreadId(threadId);
     const res = await fetch(ApiRoutes.getAllThreadMessages(threadId));
-    const data = await res.json();
+    const data = (await res.json()) as UIMessage[];
     setMessages(data);
   };
 
@@ -168,8 +168,11 @@ export default function Page() {
 
         setHighlight({ section, color });
 
+        console.log("toolCall", toolCall);
+
         addToolOutput({
-          tool: "highlightSection",
+          // state: "output-available",
+          tool: toolCall.toolName,
           toolCallId: toolCall.toolCallId,
           output: "Successfully highlighted",
         });
@@ -264,6 +267,10 @@ export default function Page() {
     return () => observer.disconnect();
   }, [activeThreadId]);
 
+  useEffect(() => {
+    console.log("messages", messages);
+  }, [messages]);
+
   return (
     <div className={styles.container}>
       {/* чтобы сайдбар не прыгал при инициализации на мобилке - рисуем только после инициализации */}
@@ -317,7 +324,7 @@ export default function Page() {
               key={m.id}
               className={clsx(
                 styles.messageRow,
-                m.role === "user" ? styles.user : styles.ai
+                m.role === "user" ? styles.user : styles.ai,
               )}
             >
               <div className={styles.content}>
@@ -327,29 +334,49 @@ export default function Page() {
                       return <MarkdownText key={i} text={part.text} />;
 
                     case "tool-showStockPrice": {
-                      const callId = part.toolCallId;
-
                       if (part.state === "output-available") {
-                        const output = part.output as IShowStockPriceResult;
+                        let output: IShowStockPriceResult;
+                        if (typeof part.output === "string") {
+                          output = JSON.parse(
+                            part.output,
+                          ) as IShowStockPriceResult;
+                        } else {
+                          output = part.output as IShowStockPriceResult;
+                        }
 
                         return (
-                          <div key={callId} className={styles.stockWidget}>
+                          <div key={i} className={styles.stockWidget}>
                             <b>{output.symbol}</b>: ${output.price}
                           </div>
                         );
                       }
 
-                      return <div key={callId}>Загрузка котировок...</div>;
+                      return <div key={i}>Загрузка котировок...</div>;
+                    }
+
+                    case "tool-highlightSection": {
+                      switch (part.state) {
+                        case "input-streaming":
+                          return <div key={i}>Подготовка запроса...</div>;
+                        case "input-available":
+                          return <div key={i}>Получение данных...</div>;
+                        case "output-available":
+                          return <div key={i}>Успешно подсвечено</div>;
+                        case "output-error":
+                          return (
+                            <div key={i}>
+                              Ошибка подсветки: {part.errorText}
+                            </div>
+                          );
+                      }
+                      break;
                     }
 
                     case "tool-deleteThread": {
                       switch (part.state) {
                         case "approval-requested":
                           return (
-                            <div
-                              key={part.toolCallId}
-                              className={styles.confirmBox}
-                            >
+                            <div key={i} className={styles.confirmBox}>
                               <p>Удалить этот чат? </p>
                               <div className={styles.btnGroup}>
                                 <button

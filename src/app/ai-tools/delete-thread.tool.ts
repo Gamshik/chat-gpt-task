@@ -6,15 +6,13 @@ import { z } from "zod";
 export const deleteThread = createTool({
   needsApproval: true,
 
-  description:
-    "Удалить существующий чат-тред из базы данных. " +
-    "Это необратимое действие и должно использоваться только после явного подтверждения пользователя.",
+  description: "Удалить существующий чат-тред из базы данных. ",
 
   inputSchema: z.object({
     threadId: z
       .string()
       .describe(
-        "Уникальный идентификатор треда, который пользователь запросил удалить"
+        "Уникальный идентификатор треда, который пользователь запросил удалить",
       ),
   }),
 
@@ -29,6 +27,7 @@ export const deleteThread = createTool({
   }),
 
   execute: async ({ threadId }): Promise<IDeleteThreadResult> => {
+    console.log("IDeleteThreadResult", threadId);
     threadQueries.delete(threadId);
     return { deletedId: threadId, message: "Тред успешно удален" };
   },

@@ -5,9 +5,11 @@ import chatDb from "../database";
 export const threadQueries: IThreadQueries = {
   create: (dto: ICreateThreadDTO): string => {
     const id = crypto.randomUUID();
+
     chatDb
       .prepare("INSERT INTO threads (id, title) VALUES (?, ?)")
       .run(id, dto.title);
+
     return id;
   },
 
