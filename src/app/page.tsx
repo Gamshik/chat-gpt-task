@@ -100,8 +100,16 @@ export default function Page() {
    * @param threadId айди треда
    */
   const loadThreadMessages = async (threadId: string) => {
-    setActiveThreadId(threadId);
     const res = await fetch(ApiRoutes.getAllThreadMessages(threadId));
+
+    if (res.status === 404) {
+      // если тред не найден
+      setActiveThreadId(null);
+      return;
+    }
+
+    setActiveThreadId(threadId);
+
     const data = (await res.json()) as UIMessage[];
     setMessages(data);
   };
@@ -119,9 +127,9 @@ export default function Page() {
   };
 
   /**
-   * Обрабатывает создание нового чата
+   * Обрабатывает создание нового треда
    */
-  const handleCreateNewChat = () => {
+  const handleCreateNewThread = () => {
     setActiveThreadId(null);
     setMessages([]);
     setInputValue("");
@@ -133,12 +141,19 @@ export default function Page() {
     setMessages,
     addToolOutput,
     addToolApprovalResponse,
+    resumeStream,
   } = useChat<UIMessage>({
     messages: [],
     id: activeThreadId || undefined,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
-    resume: true,
+    onFinish: async (res) => {
+      console.log("activeThreadId", activeThreadId);
+      console.log("res", res);
+    },
     transport: new DefaultChatTransport({
+      prepareReconnectToStreamRequest: () => ({
+        api: `/api/chat/${activeThreadId}/stream`,
+      }),
       prepareSendMessagesRequest: ({ messages }) => ({
         body: {
           message: messages.at(-1),
@@ -151,11 +166,9 @@ export default function Page() {
 
         // если создался новый тред
         if (serverThreadId && !activeThreadId) {
-          queueMicrotask(() => {
-            setActiveThreadId(serverThreadId);
-            loadThreads();
-            loadThreadMessages(serverThreadId);
-          });
+          setActiveThreadId(serverThreadId);
+          loadThreads();
+          loadThreadMessages(serverThreadId);
         }
         return response;
       }) as TransportFetchType,
@@ -168,10 +181,7 @@ export default function Page() {
 
         setHighlight({ section, color });
 
-        console.log("toolCall", toolCall);
-
         addToolOutput({
-          // state: "output-available",
           tool: toolCall.toolName,
           toolCallId: toolCall.toolCallId,
           output: "Successfully highlighted",
@@ -193,10 +203,10 @@ export default function Page() {
     const params = new URLSearchParams(window.location.search);
     const threadIdFromQuery = params.get(QueryParams.threadId);
 
-    if (threadIdFromQuery) {
-      setActiveThreadId(threadIdFromQuery);
-      loadThreadMessages(threadIdFromQuery);
-    }
+    if (!threadIdFromQuery) return;
+
+    setActiveThreadId(threadIdFromQuery);
+    loadThreadMessages(threadIdFromQuery);
   }, []);
 
   // меняет состояние сайдбара при сжатии/расширении окна
@@ -225,6 +235,10 @@ export default function Page() {
       };
     }
   }, [isMobile, isSidebarOpen]);
+
+  useEffect(() => {
+    if (activeThreadId) resumeStream();
+  }, [activeThreadId]);
 
   // обновляет query параметры
   useEffect(() => {
@@ -267,10 +281,6 @@ export default function Page() {
     return () => observer.disconnect();
   }, [activeThreadId]);
 
-  useEffect(() => {
-    console.log("messages", messages);
-  }, [messages]);
-
   return (
     <div className={styles.container}>
       {/* чтобы сайдбар не прыгал при инициализации на мобилке - рисуем только после инициализации */}
@@ -293,7 +303,7 @@ export default function Page() {
               threads={threads}
               activeThreadId={activeThreadId}
               onClose={() => setIsSidebarOpen(false)}
-              onNewChat={handleCreateNewChat}
+              onNewChat={handleCreateNewThread}
               onSelectThread={loadThreadMessages}
             />
           </aside>

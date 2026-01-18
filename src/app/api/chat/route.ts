@@ -1,11 +1,28 @@
 import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages, UIMessage, stepCountIs } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  UIMessage,
+  stepCountIs,
+  generateId,
+} from "ai";
 import { threadQueries, messageQueries, messagePartsQueries } from "@db";
 import { Headers } from "@app/constants";
 import { aiTools } from "@app/ai-tools";
 import { MessageRole } from "@models";
 import { ISendChatMessageParams } from "@app/interfaces";
 import { messageModelToApi } from "@app/utils";
+import { createResumableStreamContext } from "resumable-stream";
+import { after } from "next/server";
+
+//#region interfaces
+
+interface IToolPart {
+  state: string;
+  output: object;
+}
+
+//#endregion
 
 export async function POST(request: Request) {
   const { message, threadId }: ISendChatMessageParams = await request.json();
@@ -40,9 +57,14 @@ export async function POST(request: Request) {
     ],
   });
 
+  threadQueries.setActiveStream({
+    threadId: currentThreadId,
+    streamId: null,
+  });
+
   const allChatMessages = messageQueries.getByThreadId(currentThreadId);
 
-  const uiMessages = allChatMessages
+  const apiMessages = allChatMessages
     .map((m) => messageModelToApi(m))
     .filter((m): m is UIMessage => m !== null);
 
@@ -57,31 +79,24 @@ export async function POST(request: Request) {
       - Если информации недостаточно — задай уточняющий вопрос.
       - Не придумывай данные, которых нет.
       - Вызывай только по одному инструменту за запрос.
-      - Используй инструменты строго по назначению, у каждого есть своё описание, 
+      - Используй инструменты строго по назначению, у каждого есть своё описание,
         которое ты должен сопоставить с запросом и использовать нужный инструмент.
     `,
-    messages: await convertToModelMessages(uiMessages),
+    messages: await convertToModelMessages(apiMessages),
     stopWhen: stepCountIs(5),
     tools: aiTools,
-    // onFinish: async (res) => {
-    //   console.log("res.toolCalls", res.toolCalls);
-    //   console.log("res.toolResults", res.toolResults);
-    //   console.log("res.staticToolCalls", res.staticToolCalls);
-    //   console.log("res.staticToolResults", res.staticToolResults);
-    //   console.log("res.dynamicToolCalls", res.dynamicToolCalls);
-    //   console.log("res.dynamicToolResults", res.dynamicToolResults);
-    // },
   });
 
   return result.toUIMessageStreamResponse({
+    headers: {
+      [Headers.threadId]: currentThreadId,
+      "Access-Control-Expose-Headers": Headers.threadId,
+    },
+    originalMessages: apiMessages,
+    generateMessageId: generateId,
     onFinish: async ({ responseMessage }) => {
-      console.log(
-        "toUIMessageStreamResponse responseMessage:",
-        responseMessage,
-      );
-
       const msgId = messageQueries.create({
-        thread_id: currentThreadId,
+        threadId: currentThreadId,
         role: MessageRole.Assistant,
       });
 
@@ -92,22 +107,33 @@ export async function POST(request: Request) {
             text: part.text,
           });
         } else if (part.type.startsWith("tool-")) {
+          const toolPart = part as IToolPart;
+
+          if (toolPart.state !== "output-available") continue;
+
           messagePartsQueries.create(msgId, {
             type: part.type,
-            // TODO: починить этот костыль
-            state:
-              part.type === "tool-highlightSection"
-                ? "output-available"
-                : (part as { state: string }).state,
-            // state: (part as { state: string }).state,
-            text: JSON.stringify((part as { output: object }).output),
+            state: toolPart.state,
+            text: JSON.stringify(toolPart.output),
           });
         }
       }
+
+      threadQueries.setActiveStream({
+        threadId: currentThreadId,
+        streamId: null,
+      });
     },
-    headers: {
-      [Headers.threadId]: currentThreadId,
-      "Access-Control-Expose-Headers": Headers.threadId,
+    consumeSseStream: async ({ stream }) => {
+      const streamId = generateId();
+
+      const streamContext = createResumableStreamContext({ waitUntil: after });
+      await streamContext.createNewResumableStream(streamId, () => stream);
+
+      threadQueries.setActiveStream({
+        threadId: currentThreadId,
+        streamId,
+      });
     },
   });
 }
