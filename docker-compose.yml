@@ -1,0 +1,26 @@
+services:
+  redis:
+    container_name: redis
+    image: redis:latest
+    command:
+      - redis-server
+      - --rename-command
+      - COMMAND
+      - ""
+    environment:
+      - REDIS_PASSWORD=1234
+      - REDIS_USER=root
+      - REDIS_USER_PASSWORD=1234
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "1234", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+    driver: local
