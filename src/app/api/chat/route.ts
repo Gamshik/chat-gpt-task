@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     .join("");
 
   messageQueries.create({
-    thread_id: currentThreadId,
+    threadId: currentThreadId,
     role: MessageRole.User,
     parts: [
       {

@@ -24,6 +24,7 @@
       "@app/*": ["./src/app/*"],
       "@db": ["./src/lib/db/index"],
       "@models": ["./src/models/index"],
+      "@dto": ["./src/dto/index"],
       "@contracts": ["./src/contracts/index"],
       "@components/*": ["./src/components/*"]
     }

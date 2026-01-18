@@ -11,6 +11,6 @@ export const messageModelToApi = (message: IMessageModel): UIMessage | null =>
           .filter((p) => p.type === "text")
           .map((p) => ({
             type: "text",
-            text: p.text,
+            text: p.text ?? "",
           })),
       };

@@ -9,6 +9,7 @@ export function initDb(db: Database) {
     CREATE TABLE IF NOT EXISTS threads (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
+      activeStreamId TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) WITHOUT ROWID
   `);
@@ -30,11 +31,11 @@ export function initDb(db: Database) {
       id TEXT PRIMARY KEY,
       message_id TEXT NOT NULL,  
       type TEXT NOT NULL,
-      text TEXT NOT NULL DEFAULT '',
-      state TEXT NOT NULL DEFAULT '',
-      toolCallId TEXT NOT NULL DEFAULT '',
-      input TEXT NOT NULL DEFAULT '',
-      output TEXT NOT NULL DEFAULT '',
+      text TEXT,
+      state TEXT,
+      toolCallId TEXT,
+      input TEXT,
+      output TEXT,
       FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
     ) WITHOUT ROWID
   `);

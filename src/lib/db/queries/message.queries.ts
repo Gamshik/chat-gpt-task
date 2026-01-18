@@ -1,6 +1,7 @@
 import { IMessageQueries } from "@contracts";
-import { ICreateMessageDTO, IMessageModel, IMessagePartModel } from "@models";
+import { IMessageModel, IMessagePartModel } from "@models";
 import chatDb from "../database";
+import { ICreateMessageDTO } from "@dto";
 
 export const messageQueries: IMessageQueries = {
   create: (dto: ICreateMessageDTO): string => {
@@ -13,7 +14,7 @@ export const messageQueries: IMessageQueries = {
         VALUES (?, ?, ?)
       `,
       )
-      .run(messageId, dto.thread_id, dto.role);
+      .run(messageId, dto.threadId, dto.role);
 
     // вставляем части сообщения, если есть
     if (dto.parts && dto.parts.length > 0) {
@@ -28,11 +29,11 @@ export const messageQueries: IMessageQueries = {
           crypto.randomUUID(),
           messageId,
           part.type,
-          part.state ?? "",
-          part.text ?? "",
-          part.toolCallId ?? "",
-          part.input ?? "",
-          part.output ?? "",
+          part.state ?? null,
+          part.text ?? null,
+          part.toolCallId ?? null,
+          part.input ?? null,
+          part.output ?? null,
         );
       }
     }

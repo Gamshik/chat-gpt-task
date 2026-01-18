@@ -53,7 +53,7 @@ async function seed() {
 
         // создаём сообщение
         const messageId = messageQueries.create({
-          thread_id: threadId,
+          threadId: threadId,
           role: isUser ? MessageRole.User : MessageRole.Assistant,
           parts: [
             {

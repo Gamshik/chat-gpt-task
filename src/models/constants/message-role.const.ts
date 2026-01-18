@@ -1,7 +1,6 @@
 export const MessageRole = {
   User: "user",
   Assistant: "assistant",
-  // System: "system",
   Tool: "tool",
 } as const;
 

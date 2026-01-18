@@ -1,6 +1,6 @@
 import { IMessagePartQueries } from "@contracts";
 import chatDb from "../database";
-import { ICreateMessagePartDTO } from "@models";
+import { ICreateMessagePartDTO } from "@dto";
 
 export const messagePartsQueries: IMessagePartQueries = {
   create: (messageId: string, part: ICreateMessagePartDTO): string => {
@@ -18,11 +18,11 @@ export const messagePartsQueries: IMessagePartQueries = {
         partId,
         messageId,
         part.type,
-        part.state ?? "",
-        part.text ?? "",
-        part.toolCallId ?? "",
-        part.input ?? "",
-        part.output ?? "",
+        part.state ?? null,
+        part.text ?? null,
+        part.toolCallId ?? null,
+        part.input ?? null,
+        part.output ?? null,
       );
 
     return partId;

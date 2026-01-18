@@ -1,4 +1,4 @@
-import { ICreateMessagePartDTO, IMessagePartModel } from "@models";
+import { ICreateMessagePartDTO } from "@dto";
 
 export interface IMessagePartQueries {
   create(messageId: string, part: ICreateMessagePartDTO): string;

@@ -1,16 +1,25 @@
 import { IThreadQueries } from "@contracts";
-import { ICreateThreadDTO, IThreadModel } from "@models";
+import { IThreadModel } from "@models";
 import chatDb from "../database";
+import { ICreateThreadDTO, ISetActiveStreamDTO } from "@dto";
 
 export const threadQueries: IThreadQueries = {
   create: (dto: ICreateThreadDTO): string => {
     const id = crypto.randomUUID();
 
     chatDb
-      .prepare("INSERT INTO threads (id, title) VALUES (?, ?)")
-      .run(id, dto.title);
+      .prepare(
+        "INSERT INTO threads (id, title, activeStreamId) VALUES (?, ?, ?)",
+      )
+      .run(id, dto.title, dto.activeStreamId ?? null);
 
     return id;
+  },
+
+  setActiveStream: (dto: ISetActiveStreamDTO): void => {
+    chatDb
+      .prepare("UPDATE threads SET activeStreamId = ? WHERE id = ?")
+      .run(dto.streamId, dto.threadId);
   },
 
   getAll: (): IThreadModel[] => {
