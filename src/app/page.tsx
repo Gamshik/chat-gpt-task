@@ -17,7 +17,11 @@ import clsx from "clsx";
 import { MarkdownText } from "@components/markdown-text";
 import { ChatSidebar } from "@components/chat-sidebar";
 import { useRouter } from "next/navigation";
-import { ISendChatMessageParams, IShowStockPriceResult } from "@app/interfaces";
+import {
+  ISendChatMessageParams,
+  IShowStockPriceResult,
+  IToolPart,
+} from "@app/interfaces";
 import {
   HighlightSectionType,
   Headers,
@@ -174,7 +178,7 @@ export default function Page() {
       const highlightResult = res.message.parts.find(
         (p) =>
           p.type === "tool-highlightSection" && p.state === "output-available",
-      );
+      ) as IToolPart;
 
       if (res.message.role === "assistant" && highlightResult) {
         // TODO: как будто это всё равно костыль, мб переделать
@@ -185,8 +189,7 @@ export default function Page() {
             {
               type: "tool-highlightSection",
               state: "output-available",
-              // TODO: нормально типизировать
-              output: (highlightResult as { output: string }).output,
+              output: highlightResult.output as string,
             },
           ],
         });

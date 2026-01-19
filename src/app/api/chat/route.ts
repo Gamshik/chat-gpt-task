@@ -10,19 +10,10 @@ import { threadQueries, messageQueries, messagePartsQueries } from "@db";
 import { Headers } from "@app/constants";
 import { aiTools } from "@app/ai-tools";
 import { MessageRole } from "@models";
-import { ISendChatMessageParams } from "@app/interfaces";
+import { ISendChatMessageParams, IToolPart } from "@app/interfaces";
 import { messageModelToApi } from "@app/utils";
 import { createResumableStreamContext } from "resumable-stream";
 import { after } from "next/server";
-
-//#region interfaces
-
-interface IToolPart {
-  state: string;
-  output: object;
-}
-
-//#endregion
 
 export async function POST(request: Request) {
   const { message, threadId }: ISendChatMessageParams = await request.json();
@@ -114,7 +105,7 @@ export async function POST(request: Request) {
           messagePartsQueries.create(msgId, {
             type: part.type,
             state: toolPart.state,
-            text: JSON.stringify(toolPart.output),
+            output: JSON.stringify(toolPart.output),
           });
         }
       }
