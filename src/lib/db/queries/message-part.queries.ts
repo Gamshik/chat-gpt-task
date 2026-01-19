@@ -10,7 +10,7 @@ export const messagePartsQueries: IMessagePartQueries = {
       .prepare(
         `
         INSERT INTO messages_parts
-          (id, message_id, type, state, text, toolCallId, input, output)
+          (id, messageId, type, state, text, toolCallId, input, output)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
       )

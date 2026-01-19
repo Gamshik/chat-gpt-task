@@ -10,7 +10,7 @@ export async function GET() {
     console.log("Failed to fetch threads:", error);
     return NextResponse.json(
       { error: "Failed to fetch threads" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

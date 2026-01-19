@@ -10,7 +10,7 @@ export function initDb(db: Database) {
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       activeStreamId TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
     ) WITHOUT ROWID
   `);
 
@@ -18,10 +18,10 @@ export function initDb(db: Database) {
   db.run(`
     CREATE TABLE IF NOT EXISTS messages (
       id TEXT PRIMARY KEY,
-      thread_id TEXT NOT NULL,
+      threadId TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'tool')),
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (thread_id) REFERENCES threads(id) ON DELETE CASCADE
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (threadId) REFERENCES threads(id) ON DELETE CASCADE
     ) WITHOUT ROWID
   `);
 
@@ -29,14 +29,14 @@ export function initDb(db: Database) {
   db.run(`
     CREATE TABLE IF NOT EXISTS messages_parts (
       id TEXT PRIMARY KEY,
-      message_id TEXT NOT NULL,  
+      messageId TEXT NOT NULL,  
       type TEXT NOT NULL,
       text TEXT,
       state TEXT,
       toolCallId TEXT,
       input TEXT,
       output TEXT,
-      FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+      FOREIGN KEY (messageId) REFERENCES messages(id) ON DELETE CASCADE
     ) WITHOUT ROWID
   `);
 

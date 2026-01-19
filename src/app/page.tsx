@@ -11,7 +11,7 @@ import {
   HttpChatTransportInitOptions,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
-import { IThreadModel } from "@models";
+import { IThreadModel, MessageRole } from "@models";
 import { ChatInput } from "@components/chat-input";
 import clsx from "clsx";
 import { MarkdownText } from "@components/markdown-text";
@@ -26,6 +26,7 @@ import {
   ApiRoutes,
 } from "@app/constants";
 import { useResizeWindow } from "@app/hooks";
+import { ICreateMessageDTO } from "@dto";
 
 //#region types/interfaces
 
@@ -85,6 +86,27 @@ export default function Page() {
     return {};
   };
 
+  /**
+   * Создаёт сообщение
+   *
+   * @param dto данные
+   * @returns созданное сообщение
+   */
+  const createMessage = async (dto: ICreateMessageDTO) => {
+    const res = await fetch(ApiRoutes.createMessage(dto.threadId), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(dto),
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    return res.json();
+  };
+
+  // TODO: сделать запросы через tanstack
   /**
    * Загружает свежие треды
    */
@@ -147,8 +169,30 @@ export default function Page() {
     id: activeThreadId || undefined,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onFinish: async (res) => {
-      console.log("activeThreadId", activeThreadId);
-      console.log("res", res);
+      if (!activeThreadId) return;
+
+      const highlightResult = res.message.parts.find(
+        (p) =>
+          p.type === "tool-highlightSection" && p.state === "output-available",
+      );
+
+      if (res.message.role === "assistant" && highlightResult) {
+        // TODO: как будто это всё равно костыль, мб переделать
+        await createMessage({
+          threadId: activeThreadId,
+          role: MessageRole.Assistant,
+          parts: [
+            {
+              type: "tool-highlightSection",
+              state: "output-available",
+              // TODO: нормально типизировать
+              output: (highlightResult as { output: string }).output,
+            },
+          ],
+        });
+
+        await loadThreadMessages(activeThreadId);
+      }
     },
     transport: new DefaultChatTransport({
       prepareReconnectToStreamRequest: () => ({
@@ -184,7 +228,7 @@ export default function Page() {
         addToolOutput({
           tool: toolCall.toolName,
           toolCallId: toolCall.toolCallId,
-          output: "Successfully highlighted",
+          output: "Успешно подсвечено",
         });
       }
     },
@@ -371,7 +415,7 @@ export default function Page() {
                         case "input-available":
                           return <div key={i}>Получение данных...</div>;
                         case "output-available":
-                          return <div key={i}>Успешно подсвечено</div>;
+                          return <div key={i}>{part.output as string}</div>;
                         case "output-error":
                           return (
                             <div key={i}>

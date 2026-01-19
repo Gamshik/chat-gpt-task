@@ -14,7 +14,7 @@ export const messageModelToUi = (message: IMessageModel): UIMessage | null =>
                 type: p.type,
                 state: p.state,
                 text: p.text,
-                output: p.text,
+                output: p.output,
               }) as UIMessagePart<UIDataTypes, UITools>,
           )
           .sort((a, b) => {

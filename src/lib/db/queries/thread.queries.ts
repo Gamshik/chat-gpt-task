@@ -24,7 +24,7 @@ export const threadQueries: IThreadQueries = {
 
   getAll: (): IThreadModel[] => {
     return chatDb
-      .query("SELECT * FROM threads ORDER BY created_at DESC")
+      .query("SELECT * FROM threads ORDER BY createdAt DESC")
       .all() as IThreadModel[];
   },
 
