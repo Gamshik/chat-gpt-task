@@ -27,7 +27,6 @@ export const deleteThread = createTool({
   }),
 
   execute: async ({ threadId }): Promise<IDeleteThreadResult> => {
-    console.log("IDeleteThreadResult", threadId);
     threadQueries.delete(threadId);
     return { deletedId: threadId, message: "Тред успешно удален" };
   },
