@@ -1,5 +1,9 @@
 import { MessageRole } from "@models";
-import { threadQueries, messageQueries, messagePartsQueries } from "./queries";
+import {
+  threadsQueries,
+  messagesQueries,
+  messagePartsQueries,
+} from "./queries";
 
 const TOPICS = [
   "Проектирование БД",
@@ -34,7 +38,7 @@ async function seed() {
 
   try {
     for (const topic of TOPICS) {
-      const threadId = threadQueries.create({ title: topic });
+      const threadId = threadsQueries.create({ title: topic });
 
       const messageCount = Math.floor(Math.random() * 5) + 6;
 
@@ -52,7 +56,7 @@ async function seed() {
         }
 
         // создаём сообщение
-        const messageId = messageQueries.create({
+        const messageId = messagesQueries.create({
           threadId: threadId,
           role: isUser ? MessageRole.User : MessageRole.Assistant,
           parts: [

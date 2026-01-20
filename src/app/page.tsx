@@ -11,7 +11,7 @@ import {
   HttpChatTransportInitOptions,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
-import { IThreadModel, MessageRole } from "@models";
+import { IMessageModel, IThreadModel, MessageRole } from "@models";
 import { ChatInput } from "@components/chat-input";
 import clsx from "clsx";
 import { MarkdownText } from "@components/markdown-text";
@@ -31,6 +31,7 @@ import {
 } from "@app/constants";
 import { useResizeWindow } from "@app/hooks";
 import { ICreateMessageDTO } from "@dto";
+import { messageModelToUi } from "@app/utils";
 
 //#region types/interfaces
 
@@ -136,8 +137,13 @@ export default function Page() {
 
     setActiveThreadId(threadId);
 
-    const data = (await res.json()) as UIMessage[];
-    setMessages(data);
+    const data = (await res.json()) as IMessageModel[];
+
+    const uiMessages = data
+      .map((m) => messageModelToUi(m))
+      .filter((m): m is UIMessage => m !== null);
+
+    setMessages(uiMessages);
   };
 
   /**
@@ -284,6 +290,7 @@ export default function Page() {
   }, [isMobile, isSidebarOpen]);
 
   useEffect(() => {
+    // TODO: FIX - когда база пустая, пишешь первое сообщение - возвращает 204
     if (activeThreadId) resumeStream();
   }, [activeThreadId]);
 
@@ -418,11 +425,13 @@ export default function Page() {
                         case "input-available":
                           return <div key={i}>Получение данных...</div>;
                         case "output-available":
-                          return <div key={i}>{part.output as string}</div>;
+                          return (
+                            <div key={i}>{(part.output as string) ?? ""}</div>
+                          );
                         case "output-error":
                           return (
                             <div key={i}>
-                              Ошибка подсветки: {part.errorText}
+                              Ошибка подсветки: {part.errorText ?? ""}
                             </div>
                           );
                       }
@@ -437,12 +446,13 @@ export default function Page() {
                               <p>Удалить этот чат? </p>
                               <div className={styles.btnGroup}>
                                 <button
-                                  onClick={() =>
+                                  onClick={() => {
+                                    console.log(`addTool`, part);
                                     addToolApprovalResponse({
                                       id: part.approval.id,
                                       approved: true,
-                                    })
-                                  }
+                                    });
+                                  }}
                                 >
                                   Да, удалить
                                 </button>

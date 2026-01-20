@@ -1,4 +1,4 @@
-import { threadQueries } from "@db";
+import { threadsQueries } from "@db";
 import { UI_MESSAGE_STREAM_HEADERS } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
@@ -9,7 +9,7 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const thread = threadQueries.getById(id);
+  const thread = threadsQueries.getById(id);
 
   if (!thread)
     return new Response(null, { status: 404, statusText: "Thread not found" });

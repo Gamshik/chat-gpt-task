@@ -1,3 +1,4 @@
-export * from "./thread-queries.contract";
-export * from "./message-queries.contract";
-export * from "./message-part-queries.contract";
+export * from "./threads-queries.contract";
+export * from "./messages-queries.contract";
+export * from "./message-parts-queries.contract";
+export * from "./part-approval-queries.contract";

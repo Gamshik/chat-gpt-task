@@ -40,17 +40,33 @@ export function initDb(db: Database) {
     ) WITHOUT ROWID
   `);
 
+  // таблица аппрувов
+  db.run(`
+    CREATE TABLE IF NOT EXISTS parts_approvals (
+      id TEXT PRIMARY KEY,
+      partId TEXT NOT NULL UNIQUE,
+      approvalId TEXT NOT NULL,
+      isApproved INTEGER CHECK (isApproved IN (0, 1) OR isApproved IS NULL),
+      FOREIGN KEY (partId) REFERENCES messages_parts(id) ON DELETE CASCADE
+    ) WITHOUT ROWID
+  `);
+
   // на данный момент бесполезно создавать индексы, так как записей в бд очень мало
   // будет змедлять операции insert / update / delete
   // стоит добавить если в бд ожидается рост количества данных (> 1k)
   // db.run(`
-  //   CREATE INDEX IF NOT EXISTS idx_messages_thread_id
-  //   ON messages(thread_id)
+  // CREATE INDEX IF NOT EXISTS idx_messages_thread
+  //   ON messages(threadId);
   // `);
 
   // db.run(`
-  //   CREATE INDEX IF NOT EXISTS idx_messages_parts_message_id
-  //   ON messages_parts(message_id)
+  // CREATE INDEX IF NOT EXISTS idx_parts_message
+  //   ON messages_parts(messageId);)
+  // `);
+
+  // db.run(`
+  // CREATE INDEX IF NOT EXISTS idx_approvals_part
+  //   ON parts_approvals(partId);
   // `);
 
   console.log("Database was initialized");

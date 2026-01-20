@@ -1,5 +1,5 @@
 import { ICreateMessagePartDTO } from "@dto";
 
-export interface IMessagePartQueries {
+export interface IMessagePartsQueries {
   create(messageId: string, part: ICreateMessagePartDTO): string;
 }

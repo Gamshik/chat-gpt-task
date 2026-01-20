@@ -5,7 +5,7 @@ import { IThreadModel } from "@models";
 // то лучше добавить слой (service) между UI и Query,
 // чтобы UI работал онли с дтошками, а Query (бд слой) с моделями,
 // но в данном контексте это звучит очень избыточно
-export interface IThreadQueries {
+export interface IThreadsQueries {
   create(dto: ICreateThreadDTO): string;
   setActiveStream(dto: ISetActiveStreamDTO): void;
   getAll(): IThreadModel[];

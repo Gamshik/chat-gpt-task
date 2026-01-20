@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { threadQueries } from "@db";
+import { threadsQueries } from "@db";
 
 export async function GET() {
   try {
-    const threads = threadQueries.getAll();
+    const threads = threadsQueries.getAll();
 
     return NextResponse.json(threads);
   } catch (error) {

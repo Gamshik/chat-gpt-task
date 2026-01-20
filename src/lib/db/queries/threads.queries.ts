@@ -1,9 +1,9 @@
-import { IThreadQueries } from "@contracts";
+import { IThreadsQueries } from "@contracts";
 import { IThreadModel } from "@models";
 import chatDb from "../database";
 import { ICreateThreadDTO, ISetActiveStreamDTO } from "@dto";
 
-export const threadQueries: IThreadQueries = {
+export const threadsQueries: IThreadsQueries = {
   create: (dto: ICreateThreadDTO): string => {
     const id = crypto.randomUUID();
 

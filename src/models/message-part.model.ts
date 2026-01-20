@@ -1,3 +1,5 @@
+import { IPartApprovalModel } from "./part-approval.model";
+
 export interface IMessagePartModel {
   id: string;
   messageId: string;
@@ -7,4 +9,5 @@ export interface IMessagePartModel {
   toolCallId: string | null;
   input: string | null;
   output: string | null;
+  approval?: IPartApprovalModel;
 }

@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { messageQueries, threadQueries } from "@db";
-import { messageModelToUi } from "@app/utils";
-import { UIMessage } from "ai";
+import { messagesQueries, threadsQueries } from "@db";
 import { ICreateMessageDTO } from "@dto";
 
 export async function GET(
@@ -11,7 +9,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const thread = threadQueries.getById(id);
+    const thread = threadsQueries.getById(id);
 
     if (!thread)
       return new Response(null, {
@@ -19,13 +17,9 @@ export async function GET(
         statusText: "Thread not found",
       });
 
-    const messages = messageQueries.getByThreadId(id);
+    const messages = messagesQueries.getByThreadId(id);
 
-    const uiMessages = messages
-      .map((m) => messageModelToUi(m))
-      .filter((m): m is UIMessage => m !== null);
-
-    return NextResponse.json(uiMessages);
+    return NextResponse.json(messages);
   } catch (error) {
     console.error("Ошибка API:", error);
     return NextResponse.json(
@@ -39,7 +33,7 @@ export async function POST(request: Request) {
   try {
     const body: ICreateMessageDTO = await request.json();
 
-    const thread = threadQueries.getById(body.threadId);
+    const thread = threadsQueries.getById(body.threadId);
 
     if (!thread)
       return new Response(null, {
@@ -47,9 +41,9 @@ export async function POST(request: Request) {
         statusText: "Thread not found",
       });
 
-    const messageId = messageQueries.create(body);
+    const messageId = messagesQueries.create(body);
 
-    const createdMessage = messageQueries.getById(messageId);
+    const createdMessage = messagesQueries.getById(messageId);
 
     if (!createdMessage) {
       return new Response(null, {
@@ -58,9 +52,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const uiMessage = messageModelToUi(createdMessage);
-
-    return NextResponse.json(uiMessage);
+    return NextResponse.json(createdMessage);
   } catch (error) {
     console.error("Ошибка API:", error);
     return NextResponse.json(
