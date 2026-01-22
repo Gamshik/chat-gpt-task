@@ -439,13 +439,17 @@ export default function Page() {
                     }
 
                     case "tool-deleteThread": {
+                      console.log("tool-deleteThread", part);
                       switch (part.state) {
                         case "approval-requested":
                           return (
                             <div key={i} className={styles.confirmBox}>
-                              <p>Удалить этот чат? </p>
+                              <p className={styles.confitmText}>
+                                Удалить этот чат?
+                              </p>
                               <div className={styles.btnGroup}>
                                 <button
+                                  className={clsx(styles.btn, styles.confirm)}
                                   onClick={() => {
                                     console.log(`addTool`, part);
                                     addToolApprovalResponse({
@@ -454,9 +458,10 @@ export default function Page() {
                                     });
                                   }}
                                 >
-                                  Да, удалить
+                                  Да
                                 </button>
                                 <button
+                                  className={clsx(styles.btn, styles.deny)}
                                   onClick={() =>
                                     addToolApprovalResponse({
                                       id: part.approval.id,
@@ -469,12 +474,15 @@ export default function Page() {
                               </div>
                             </div>
                           );
+                        case "approval-responded":
+                          return (
+                            <p key={i}>
+                              {part.approval.approved ? "Да" : "Нет"}
+                            </p>
+                          );
                         case "output-available":
                           return (
-                            <div
-                              key={part.toolCallId}
-                              className={styles.systemMsg}
-                            >
+                            <div key={i} className={styles.systemMsg}>
                               Тред удален
                             </div>
                           );

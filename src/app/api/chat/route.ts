@@ -5,7 +5,6 @@ import {
   UIMessage,
   stepCountIs,
   generateId,
-  ModelMessage,
 } from "ai";
 import { threadsQueries, messagesQueries, messagePartsQueries } from "@db";
 import { Headers } from "@app/constants";

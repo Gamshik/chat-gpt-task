@@ -26,7 +26,9 @@
 
   background: #33333300;
 
-  transition: background 0.2s ease-in-out, visibility 0.2s linear;
+  transition:
+    background 0.2s ease-in-out,
+    visibility 0.2s linear;
 
   &[data-show="true"] {
     visibility: visible;
@@ -143,14 +145,10 @@
     overflow: hidden;
 
     &.user {
-      padding: 5px 10px 5px 20px;
+      padding: 5px 10px;
       border-radius: 10px;
       align-self: flex-end;
       background: #4d4d4d2d;
-
-      @media screen and (max-width: 1280px) {
-        padding: 5px 10px 5px 15px;
-      }
     }
     &.ai {
       align-self: flex-start;
@@ -166,6 +164,52 @@
 
       @media screen and (max-width: 1280px) {
         font-size: 14px;
+      }
+
+      .confirmBox {
+        display: flex;
+        flex-direction: column;
+        // align-items: flex-end;
+        gap: 7px;
+
+        .confitmText {
+          font-size: 16px;
+
+          @media screen and (max-width: 1280px) {
+            font-size: 14px;
+          }
+        }
+
+        .btnGroup {
+          display: flex;
+          gap: 5px;
+
+          .btn {
+            flex: 1;
+            padding: 2px 0;
+            border-radius: 5px;
+            background: none;
+            border: 1px #4a5568 solid;
+
+            font-size: 14px;
+            color: #000;
+
+            &:hover {
+              cursor: pointer;
+
+              &.confirm {
+                background: #af65656b;
+              }
+              &.deny {
+                background: #77c5706b;
+              }
+            }
+
+            @media screen and (max-width: 1280px) {
+              font-size: 12px;
+            }
+          }
+        }
       }
     }
   }

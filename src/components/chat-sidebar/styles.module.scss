@@ -98,7 +98,7 @@
       text-overflow: ellipsis;
       text-align: start;
 
-      transition: box-shadow 0.2s ease-in-out;
+      transition: box-shadow 0.2s ease;
 
       &.active {
         box-shadow: 0 1px 5px #797979;
