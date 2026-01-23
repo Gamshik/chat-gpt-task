@@ -14,6 +14,7 @@ import { ISendChatMessageParams, IToolPart } from "@app/interfaces";
 import { messageModelToApi } from "@app/utils";
 import { createResumableStreamContext } from "resumable-stream";
 import { after } from "next/server";
+import { ICreateMessagePartDTO } from "@dto";
 
 export async function POST(request: Request) {
   const { message, threadId }: ISendChatMessageParams = await request.json();
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
 
   const thread = threadsQueries.getById(currentThreadId);
 
-  console.log("messsssa", message);
+  // console.log("messsssa", message);
 
   // если не получили Id: создаём новый тред
   if (!thread) {
@@ -43,41 +44,46 @@ export async function POST(request: Request) {
   // TODO: фиксить костыль
   apiMessages.push(message);
 
+  const userMsgParts: ICreateMessagePartDTO[] = [];
+
   for (const part of message.parts) {
     if (part.type === "text") {
-      messagesQueries.create({
-        threadId: currentThreadId,
-        role: MessageRole.User,
-        parts: [
-          {
-            type: "text",
-            text: part.text,
-          },
-        ],
+      userMsgParts.push({
+        type: "text",
+        text: part.text,
+      });
+    } else if (part.type === "step-start") {
+      userMsgParts.push({
+        type: part.type,
+      });
+    } else if (part.type === "reasoning") {
+      userMsgParts.push({
+        type: part.type,
+        state: part.state,
       });
     } else if (part.type.startsWith("tool-")) {
       const toolPart = part as IToolPart;
 
       if (toolPart.state === "approval-responded" && toolPart.approval) {
-        messagesQueries.create({
-          threadId: currentThreadId,
-          role: MessageRole.User,
-          parts: [
-            {
-              type: toolPart.type,
-              state: toolPart.state,
-              input: JSON.stringify(toolPart.input ?? ""),
-              toolCallId: toolPart.toolCallId,
-              approval: {
-                approvalId: toolPart.approval.id,
-                isApproved: toolPart.approval.approved,
-              },
-            },
-          ],
+        userMsgParts.push({
+          type: toolPart.type,
+          state: toolPart.state,
+          input: JSON.stringify(toolPart.input ?? ""),
+          toolCallId: toolPart.toolCallId,
+          approval: {
+            approvalId: toolPart.approval.id,
+            isApproved: toolPart.approval.approved,
+          },
         });
       }
     }
   }
+
+  messagesQueries.create({
+    threadId: currentThreadId,
+    role: MessageRole.User,
+    parts: userMsgParts,
+  });
 
   threadsQueries.setActiveStream({
     threadId: currentThreadId,
@@ -124,24 +130,31 @@ export async function POST(request: Request) {
     onFinish: async ({ responseMessage }) => {
       console.log("res responseMessage", responseMessage);
 
-      const msgId = messagesQueries.create({
-        threadId: currentThreadId,
-        role: MessageRole.Assistant,
-      });
+      const assistantMsgParts: ICreateMessagePartDTO[] = [];
 
       for (const part of responseMessage.parts) {
-        console.log("res part", part);
+        // console.log("res part", part);
 
         if (part.type === "text") {
-          messagePartsQueries.create(msgId, {
+          assistantMsgParts.push({
             type: "text",
             text: part.text,
+          });
+        } else if (part.type === "step-start") {
+          userMsgParts.push({
+            type: part.type,
+          });
+        } else if (part.type === "reasoning") {
+          userMsgParts.push({
+            type: part.type,
+            state: part.state,
           });
         } else if (part.type.startsWith("tool-")) {
           const toolPart = part as IToolPart;
 
+          // TODO: тип state сделать перечислением
           if (toolPart.state === "output-available") {
-            messagePartsQueries.create(msgId, {
+            assistantMsgParts.push({
               type: toolPart.type,
               state: toolPart.state,
               toolCallId: toolPart.toolCallId,
@@ -149,8 +162,7 @@ export async function POST(request: Request) {
               output: JSON.stringify(toolPart.output),
             });
           } else if (toolPart.state === "approval-requested") {
-            console.log("tool part", toolPart);
-            messagePartsQueries.create(msgId, {
+            assistantMsgParts.push({
               type: toolPart.type,
               state: toolPart.state,
               input: JSON.stringify(toolPart.input ?? ""),
@@ -160,9 +172,26 @@ export async function POST(request: Request) {
               },
               toolCallId: toolPart.toolCallId,
             });
+          } else if (toolPart.state === "output-denied") {
+            assistantMsgParts.push({
+              type: toolPart.type,
+              state: toolPart.state,
+              input: JSON.stringify(toolPart.input ?? ""),
+              approval: {
+                approvalId: toolPart.approval!.id,
+                isApproved: toolPart.approval!.approved,
+              },
+              toolCallId: toolPart.toolCallId,
+            });
           }
         }
       }
+
+      messagesQueries.create({
+        threadId: currentThreadId,
+        role: MessageRole.Assistant,
+        parts: assistantMsgParts,
+      });
 
       threadsQueries.setActiveStream({
         threadId: currentThreadId,

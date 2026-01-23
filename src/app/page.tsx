@@ -1,7 +1,14 @@
 "use client";
 
 import { UIMessage, useChat } from "@ai-sdk/react";
-import { useState, useEffect, FormEvent, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  FormEvent,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import SendMsgIcon from "@public/icons/send-msg.svg";
 import OpenSidebarIcon from "@public/icons/toggle-sidebar.svg";
 
@@ -167,6 +174,20 @@ export default function Page() {
     setInputValue("");
   };
 
+  const onConfirmApprovalClick = (approvalId: string) => () => {
+    addToolApprovalResponse({
+      id: approvalId,
+      approved: true,
+    });
+  };
+
+  const onDenyApprovalClick = (approvalId: string) => () => {
+    addToolApprovalResponse({
+      id: approvalId,
+      approved: false,
+    });
+  };
+
   const {
     messages,
     sendMessage,
@@ -243,6 +264,29 @@ export default function Page() {
     },
   });
 
+  const toRespondedApprovalStr = (type: string, approvalId: string) =>
+    `${type}:${approvalId}`;
+
+  const respondedApprovals = useMemo(() => {
+    const approvals = new Set<string>();
+
+    for (let i = 0; i < messages.length; i++) {
+      const curMsg = messages[i];
+      for (let j = 0; j < curMsg.parts.length; j++) {
+        const curPart = curMsg.parts[j] as IToolPart;
+
+        if (!curPart.type.startsWith("tool-")) continue;
+
+        if (curPart.state === "approval-responded")
+          approvals.add(
+            toRespondedApprovalStr(curPart.type, curPart.approval!.id),
+          );
+      }
+    }
+
+    return approvals;
+  }, [messages]);
+
   // инициализация
   useEffect(() => {
     // загружаем тредлы
@@ -266,6 +310,10 @@ export default function Page() {
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
+
+  useEffect(() => {
+    console.log("msgs", messages);
+  }, [messages]);
 
   useEffect(() => {
     if (isMobile && isSidebarOpen) {
@@ -438,8 +486,12 @@ export default function Page() {
                       break;
                     }
 
+                    // TODO: пофиксить UX:
+                    // когда юзер апрувает/денаит удаление массив messages на фронте отображает 2 сообщения - запрос и ответ иишки на действие
+                    // потом, при перезагрузке, мы видим всё общение - запрос, аппрув/денай, ответ иишки
+                    // хотелось бы, чтобы когда юзер аппрувал/денаил мы сразу видели фулл общение, без перезагрузки
+                    // пока что не понимаю почему так происходит
                     case "tool-deleteThread": {
-                      console.log("tool-deleteThread", part);
                       switch (part.state) {
                         case "approval-requested":
                           return (
@@ -447,31 +499,31 @@ export default function Page() {
                               <p className={styles.confitmText}>
                                 Удалить этот чат?
                               </p>
-                              <div className={styles.btnGroup}>
-                                <button
-                                  className={clsx(styles.btn, styles.confirm)}
-                                  onClick={() => {
-                                    console.log(`addTool`, part);
-                                    addToolApprovalResponse({
-                                      id: part.approval.id,
-                                      approved: true,
-                                    });
-                                  }}
-                                >
-                                  Да
-                                </button>
-                                <button
-                                  className={clsx(styles.btn, styles.deny)}
-                                  onClick={() =>
-                                    addToolApprovalResponse({
-                                      id: part.approval.id,
-                                      approved: false,
-                                    })
-                                  }
-                                >
-                                  Нет
-                                </button>
-                              </div>
+                              {!respondedApprovals.has(
+                                toRespondedApprovalStr(
+                                  part.type,
+                                  part.approval.id,
+                                ),
+                              ) && (
+                                <div className={styles.btnGroup}>
+                                  <button
+                                    className={clsx(styles.btn, styles.confirm)}
+                                    onClick={onConfirmApprovalClick(
+                                      part.approval.id,
+                                    )}
+                                  >
+                                    Да
+                                  </button>
+                                  <button
+                                    className={clsx(styles.btn, styles.deny)}
+                                    onClick={onDenyApprovalClick(
+                                      part.approval.id,
+                                    )}
+                                  >
+                                    Нет
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           );
                         case "approval-responded":
