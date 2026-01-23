@@ -139,6 +139,7 @@ export default function Page() {
     if (res.status === 404) {
       // если тред не найден
       setActiveThreadId(null);
+      void loadThreads();
       return;
     }
 
@@ -200,13 +201,27 @@ export default function Page() {
     id: activeThreadId || undefined,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onFinish: async (res) => {
+      // console.log("res", res);
       if (!activeThreadId) return;
+
+      const isThreadDeleted = res.message.parts.some(
+        (p) =>
+          p.type === "tool-deleteThread" && p.approval && p.approval.approved,
+      );
+
+      if (isThreadDeleted) {
+        void loadThreads();
+        return;
+      }
 
       const highlightResult = res.message.parts.find(
         (p) =>
           p.type === "tool-highlightSection" && p.state === "output-available",
       ) as IToolPart;
 
+      // TODO: может быть тут тоже нужно сохранять степы - step-start, reasoning
+      // пока не хочу так делать, ибо получится, что у нас фронт будет знать о подобных состояниях,
+      // а сейчас он о них и не знает, тут мы с ними не работаем, это нужно лишь иишке
       if (res.message.role === "assistant" && highlightResult) {
         // TODO: как будто это всё равно костыль, мб переделать
         await createMessage({
@@ -217,11 +232,12 @@ export default function Page() {
               type: "tool-highlightSection",
               state: "output-available",
               output: highlightResult.output as string,
+              toolCallId: highlightResult.toolCallId,
             },
           ],
         });
 
-        await loadThreadMessages(activeThreadId);
+        void loadThreadMessages(activeThreadId);
       }
     },
     transport: new DefaultChatTransport({
@@ -240,9 +256,9 @@ export default function Page() {
 
         // если создался новый тред
         if (serverThreadId && !activeThreadId) {
+          await loadThreads();
           setActiveThreadId(serverThreadId);
-          loadThreads();
-          loadThreadMessages(serverThreadId);
+          void loadThreadMessages(serverThreadId);
         }
         return response;
       }) as TransportFetchType,
@@ -290,7 +306,7 @@ export default function Page() {
   // инициализация
   useEffect(() => {
     // загружаем тредлы
-    loadThreads();
+    void loadThreads();
 
     setIsMounted(true);
   }, []);
@@ -303,7 +319,7 @@ export default function Page() {
     if (!threadIdFromQuery) return;
 
     setActiveThreadId(threadIdFromQuery);
-    loadThreadMessages(threadIdFromQuery);
+    void loadThreadMessages(threadIdFromQuery);
   }, []);
 
   // меняет состояние сайдбара при сжатии/расширении окна
