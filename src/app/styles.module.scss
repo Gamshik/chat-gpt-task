@@ -1,12 +1,8 @@
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@mixin highilightTransition() {
+  // чтобы подсветка была плавной, так красивее))
+  box-shadow: none;
+
+  transition: box-shadow 0.3s ease-in-out;
 }
 
 .container {
@@ -40,7 +36,12 @@
   z-index: 2;
   transform: translateX(0);
 
-  transition: transform 0.2s ease-in-out;
+  // чтобы подсветка была плавной, так красивее))
+  box-shadow: none;
+
+  transition:
+    transform 0.2s ease-in-out,
+    box-shadow 0.3s ease-in-out;
 
   &[data-open="false"] {
     transform: translateX(-100%);
@@ -99,6 +100,8 @@
 
   padding: 50px 0;
 
+  @include highilightTransition();
+
   @media screen and (max-width: 1280px) {
     max-width: 500px;
   }
@@ -107,106 +110,106 @@
     max-width: 100%;
     padding: 40px 0 15px;
   }
-}
 
-.messagesContainer {
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-
-  /* Для Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: #bebebe transparent;
-
-  /* Для Chrome, Edge, Safari */
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #bebebe;
-    border-radius: 3px;
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    cursor: pointer;
-    background: #afafaf;
-  }
-
-  .messageRow {
-    flex-shrink: 0;
+  .messagesContainer {
+    overflow-y: auto;
+    padding: 20px;
     display: flex;
-    max-width: 70%;
-    max-height: fit-content;
-    overflow: hidden;
+    flex-direction: column;
+    gap: 25px;
 
-    &.user {
-      padding: 5px 10px;
-      border-radius: 10px;
-      align-self: flex-end;
-      background: #4d4d4d2d;
+    /* Для Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #bebebe transparent;
+
+    /* Для Chrome, Edge, Safari */
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
-    &.ai {
-      align-self: flex-start;
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #bebebe;
+      border-radius: 3px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      cursor: pointer;
+      background: #afafaf;
     }
 
-    .content {
-      max-width: 100%;
+    .messageRow {
+      flex-shrink: 0;
+      display: flex;
+      max-width: 70%;
+      max-height: fit-content;
+      overflow: hidden;
 
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-
-      font-size: 16px;
-
-      @media screen and (max-width: 1280px) {
-        font-size: 14px;
+      &.user {
+        padding: 5px 10px;
+        border-radius: 10px;
+        align-self: flex-end;
+        background: #4d4d4d2d;
+      }
+      &.ai {
+        align-self: flex-start;
       }
 
-      .confirmBox {
-        display: flex;
-        flex-direction: column;
-        // align-items: flex-end;
-        gap: 7px;
+      .content {
+        max-width: 100%;
 
-        .confitmText {
-          font-size: 16px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
 
-          @media screen and (max-width: 1280px) {
-            font-size: 14px;
-          }
+        font-size: 16px;
+
+        @media screen and (max-width: 1280px) {
+          font-size: 14px;
         }
 
-        .btnGroup {
+        .confirmBox {
           display: flex;
-          gap: 5px;
+          flex-direction: column;
+          // align-items: flex-end;
+          gap: 7px;
 
-          .btn {
-            flex: 1;
-            padding: 2px 0;
-            border-radius: 5px;
-            background: none;
-            border: 1px #4a5568 solid;
-
-            font-size: 14px;
-            color: #000;
-
-            &:hover {
-              cursor: pointer;
-
-              &.confirm {
-                background: #af65656b;
-              }
-              &.deny {
-                background: #77c5706b;
-              }
-            }
+          .confitmText {
+            font-size: 16px;
 
             @media screen and (max-width: 1280px) {
-              font-size: 12px;
+              font-size: 14px;
+            }
+          }
+
+          .btnGroup {
+            display: flex;
+            gap: 5px;
+
+            .btn {
+              flex: 1;
+              padding: 2px 0;
+              border-radius: 5px;
+              background: none;
+              border: 1px #4a5568 solid;
+
+              font-size: 14px;
+              color: #000;
+
+              &:hover {
+                cursor: pointer;
+
+                &.confirm {
+                  background: #af65656b;
+                }
+                &.deny {
+                  background: #77c5706b;
+                }
+              }
+
+              @media screen and (max-width: 1280px) {
+                font-size: 12px;
+              }
             }
           }
         }
@@ -230,6 +233,8 @@
   @media screen and (max-width: 768px) {
     width: 95%;
   }
+
+  @include highilightTransition();
 
   .inputHelpersContainer {
     width: 100%;
@@ -255,6 +260,11 @@
         background: #0000003f;
       }
 
+      &:disabled {
+        background: #24242418;
+        cursor: not-allowed;
+      }
+
       @media screen and (max-width: 768px) {
         padding: 3px;
       }
@@ -262,122 +272,14 @@
   }
 }
 
-/* --- Generative UI Tools --- */
-
-.systemNote {
-  font-size: 0.85rem;
-  color: #888;
-  font-style: italic;
-  padding: 5px 0;
-}
-
-// 1. Stock Widget
 .stockWidget {
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   padding: 15px;
-  width: 220px;
+  width: 150px;
   margin: 10px 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-
-  .stockHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-
-    .symbol {
-      background: #f0f0f0;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 0.9rem;
-    }
-
-    .positive {
-      color: #16a34a;
-      font-weight: 600;
-      font-size: 0.85rem;
-    }
-    .negative {
-      color: #dc2626;
-      font-weight: 600;
-      font-size: 0.85rem;
-    }
-  }
-
-  .price {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #333;
-  }
-}
-
-// 2. Confirmation Dialog
-.confirmationBox {
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: 12px;
-  padding: 15px;
-  margin: 10px 0;
-  display: flex;
-  gap: 15px;
-  animation: fadeIn 0.3s ease;
-
-  .warningIcon {
-    font-size: 1.5rem;
-  }
-
-  .confirmContent {
-    flex: 1;
-
-    h4 {
-      margin: 0 0 5px 0;
-      color: #9b2c2c;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-    }
-
-    p {
-      margin: 0 0 15px 0;
-      color: #4a5568;
-      font-size: 0.9rem;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-
-      button {
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        cursor: pointer;
-        border: none;
-        transition: opacity 0.2s;
-
-        &:hover {
-          opacity: 0.9;
-        }
-      }
-
-      .btnConfirm {
-        background: #e53e3e;
-        color: white;
-      }
-
-      .btnCancel {
-        background: #fff;
-        border: 1px solid #cbd5e0;
-        color: #4a5568;
-
-        &:hover {
-          background: #f7fafc;
-        }
-      }
-    }
-  }
 }
 
 .noSelect {

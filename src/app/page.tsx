@@ -68,6 +68,9 @@ export default function Page() {
   // сообщение, которое вводит пользователь
   const [inputValue, setInputValue] = useState("");
 
+  // флаг доступности отправки сообщений
+  const [isSendMsgAvailable, setIsSendMsgAvailable] = useState<boolean>(true);
+
   // конфиг текущей подсветки
   const [highlight, setHighlight] = useState<IHighlightSectionData | null>(
     null,
@@ -91,8 +94,7 @@ export default function Page() {
   const getHighlightStyle = (sectionName: HighlightSectionType) => {
     if (highlight?.section === sectionName) {
       return {
-        boxShadow: `0 0 0 4px ${highlight.color}`,
-        transition: "all 0.3s ease-in-out",
+        boxShadow: `0 0 10px 1px ${highlight.color}`,
       };
     }
     return {};
@@ -163,6 +165,7 @@ export default function Page() {
     if (!inputValue.trim()) return;
 
     sendMessage({ text: inputValue });
+    setIsSendMsgAvailable(false);
     setInputValue("");
   };
 
@@ -175,6 +178,11 @@ export default function Page() {
     setInputValue("");
   };
 
+  /**
+   * Подтверждает действие
+   *
+   * @param approvalId идентификатор действия
+   */
   const onConfirmApprovalClick = (approvalId: string) => () => {
     addToolApprovalResponse({
       id: approvalId,
@@ -182,6 +190,11 @@ export default function Page() {
     });
   };
 
+  /**
+   * Запрещает действие
+   *
+   * @param approvalId идентификатор действия
+   */
   const onDenyApprovalClick = (approvalId: string) => () => {
     addToolApprovalResponse({
       id: approvalId,
@@ -203,6 +216,8 @@ export default function Page() {
     onFinish: async (res) => {
       // console.log("res", res);
       if (!activeThreadId) return;
+
+      setIsSendMsgAvailable(true);
 
       const isThreadDeleted = res.message.parts.some(
         (p) =>
@@ -371,10 +386,10 @@ export default function Page() {
     router.replace(`${window.location.pathname}?${params.toString()}`);
   }, [activeThreadId]);
 
-  // сбрасывает подсветку через 3 секунды
+  // сбрасывает подсветку через 5 секунд
   useEffect(() => {
     if (highlight) {
-      const timer = setTimeout(() => setHighlight(null), 3000);
+      const timer = setTimeout(() => setHighlight(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [highlight]);
@@ -579,7 +594,11 @@ export default function Page() {
             placeholder="Введите сообщение..."
           />
           <div className={styles.inputHelpersContainer}>
-            <button className={styles.submitBtn} type="submit">
+            <button
+              className={styles.submitBtn}
+              type="submit"
+              disabled={!isSendMsgAvailable}
+            >
               <SendMsgIcon />
             </button>
           </div>
