@@ -1,25 +1,27 @@
 services:
   redis:
-    container_name: redis
     image: redis:latest
+    container_name: redis
+    env_file:
+      - .env
     command:
       - redis-server
-      - --rename-command
-      - COMMAND
-      - ""
-    environment:
-      - REDIS_PASSWORD=1234
-      - REDIS_USER=root
-      - REDIS_USER_PASSWORD=1234
+      - --requirepass
+      - ${REDIS_PASSWORD}
+      - --loglevel
+      - warning
+      - --appendonly
+      - "yes"
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "1234", "ping"]
+      test: ["CMD-SHELL", 'redis-cli -a "$REDIS_PASSWORD" ping | grep -q PONG']
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
 volumes:
   redis_data:

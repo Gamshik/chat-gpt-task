@@ -169,8 +169,8 @@ export default function Page() {
   /**
    * Обработчик отправки сообщения
    */
-  const onMsgSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onMessagegSubmit = async (e?: FormEvent<HTMLFormElement>) => {
+    if (e) e.preventDefault();
 
     if (!inputValue.trim()) return;
 
@@ -678,13 +678,14 @@ export default function Page() {
         </div>
 
         <form
-          onSubmit={onMsgSubmit}
+          onSubmit={onMessagegSubmit}
           className={styles.inputFormContainer}
           style={getHighlightStyle(HighlightSections.input)}
         >
           <ChatInput
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            onSubmit={onMessagegSubmit}
             placeholder="Введите сообщение..."
           />
           <div className={styles.inputHelpersContainer}>
