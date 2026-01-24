@@ -1,11 +1,8 @@
-interface IApprovalData {
-  id: string;
-  approved: boolean;
-}
+import { MessagePartStateType } from "@app/types";
+import { IApprovalData } from "./approval-data.interface";
 
 export interface IToolPart {
-  // TODO: стейты можно выписать в тип
-  state: string;
+  state: MessagePartStateType;
   toolCallId: string;
   type: string;
   input: unknown;

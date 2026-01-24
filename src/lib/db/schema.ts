@@ -69,5 +69,5 @@ export function initDb(db: Database) {
   //   ON parts_approvals(partId);
   // `);
 
-  console.log("Database was initialized");
+  console.log("БД инициализирована");
 }

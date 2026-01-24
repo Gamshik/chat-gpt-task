@@ -17,6 +17,16 @@ const SCROLL_SPEED = 10;
 
 //#endregion
 
+//#region types
+
+type ContextMenuDataType = {
+  x: number;
+  y: number;
+  value: string;
+} | null;
+
+//#endregion
+
 export function TableModal({
   sheet,
   rows,
@@ -32,6 +42,9 @@ export function TableModal({
   const lastTap = useRef<number>(0);
 
   const { isMobile } = useResizeWindow();
+
+  // данные о контекстном меню
+  const [contextMenu, setContextMenu] = useState<ContextMenuDataType>(null);
 
   // началльная выделенная ячейка
   const [startSelection, setStartSelection] = useState<CellPositionType | null>(
@@ -186,6 +199,29 @@ export function TableModal({
     onClose();
   };
 
+  /** Обработчик открытия контекстного меню для ячейки */
+  const onContextMenuCell =
+    (value: string) => (e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        value,
+      });
+    };
+
+  /**
+   * Вставляет значение выбранной ячейки в клипбоард
+   */
+  const handleCopyValue = async () => {
+    if (!contextMenu) return;
+
+    await navigator.clipboard.writeText(contextMenu.value);
+
+    setContextMenu(null);
+  };
+
   // срабатывает на любое изменение данных выделения ячеек
   // вешает событие на документ, чтобы при выделении мышкой оно продолжалось, если вышли за блок
   useEffect(() => {
@@ -246,6 +282,7 @@ export function TableModal({
                   )}
                   onMouseDown={handleMouseDownCell(r, c)}
                   onTouchStart={handleTouchStartCell(r, c)}
+                  onContextMenu={onContextMenuCell(cell)}
                 >
                   {cell}
                 </div>
@@ -261,6 +298,20 @@ export function TableModal({
         >
           Сохранить выделение
         </button>
+        {contextMenu && (
+          <div
+            className={styles.contextMenu}
+            style={{
+              top: contextMenu.y,
+              left: contextMenu.x,
+            }}
+          >
+            {/* TODO: можно добавить возможность копирования диапазона */}
+            <button className={styles.itemBtn} onClick={handleCopyValue}>
+              Скопировать значение
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

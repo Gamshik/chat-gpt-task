@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import styles from "./styles.module.scss";
 import { TableModal } from "./components/table-modal";

@@ -1,4 +1,6 @@
+import { MessagePartStateType } from "@app/types";
+
 export interface ISimpleMessagePart {
-  type: string;
+  type: MessagePartStateType;
   state?: string;
 }

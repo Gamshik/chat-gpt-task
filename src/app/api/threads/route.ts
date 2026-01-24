@@ -7,9 +7,9 @@ export async function GET() {
 
     return NextResponse.json(threads);
   } catch (error) {
-    console.log("Failed to fetch threads:", error);
+    console.log("Ошибка загрузки тредов:", error);
     return NextResponse.json(
-      { error: "Failed to fetch threads" },
+      { error: "Ошибка загрузки тредов" },
       { status: 500 },
     );
   }

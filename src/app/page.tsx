@@ -57,16 +57,16 @@ interface IHighlightSectionData {
 //#endregion
 
 export default function Page() {
-  /** ссылка на контейнер сообщений */
+  /** Ссылка на контейнер сообщений */
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  /** ссылка на контейнер сайдбара */
+  /** Ссылка на контейнер сайдбара */
   const sidebarContainerRef = useRef<HTMLDivElement>(null);
-  /** ссылка на кнопку для открытия сайдбара */
+  /** Ссылка на кнопку для открытия сайдбара */
   const openSidebarBtnRef = useRef<HTMLButtonElement>(null);
 
-  // списко тредов
+  // список тредов
   const [threads, setThreads] = useState<IThreadModel[]>([]);
-  // Id текущего треда
+  // id текущего треда
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   // сообщение, которое вводит пользователь
   const [inputValue, setInputValue] = useState("");
@@ -87,6 +87,9 @@ export default function Page() {
 
   const router = useRouter();
 
+  /**
+   * Колбэк вставляет меншон в инпут
+   */
   const setMentionToInput = useCallback(
     (mention: string) => setInputValue((prev) => prev + " " + mention),
     [],
@@ -221,7 +224,6 @@ export default function Page() {
     id: activeThreadId || undefined,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onFinish: async (res) => {
-      // console.log("res", res);
       if (!activeThreadId) return;
 
       setIsSendMsgAvailable(true);
@@ -233,6 +235,9 @@ export default function Page() {
 
       if (isThreadDeleted) {
         void loadThreads();
+        // если мы удалили текущий тред, то при загрузке сообщений получим 404 и обработаем
+        // TODO: выглядит как костыль, поэтому не мешало бы иначе это делать
+        void loadThreadMessages(activeThreadId);
         return;
       }
 
@@ -264,6 +269,7 @@ export default function Page() {
     },
     transport: new DefaultChatTransport({
       prepareReconnectToStreamRequest: () => ({
+        // TODO (bug): если я юзаю тут ApiRoutes, то запрос не идёт
         api: `/api/chat/${activeThreadId}/stream`,
       }),
       prepareSendMessagesRequest: ({ messages }) => ({
@@ -302,9 +308,17 @@ export default function Page() {
     },
   });
 
+  /**
+   * Возвращает строку с инфой об апрувнутом запросе
+   *
+   * @param type тип
+   * @param approvalId идентификатор апрува
+   * @returns строка
+   */
   const toRespondedApprovalStr = (type: string, approvalId: string) =>
     `${type}:${approvalId}`;
 
+  /** Сет аппрувнутых запросов */
   const respondedApprovals = useMemo(() => {
     const approvals = new Set<string>();
 
@@ -349,10 +363,8 @@ export default function Page() {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
 
-  useEffect(() => {
-    console.log("msgs", messages);
-  }, [messages]);
-
+  // на мобилке при открытом сайдбаре вешает событие,
+  // которое отслеживает нажатие на оверлей
   useEffect(() => {
     if (isMobile && isSidebarOpen) {
       const handleClickOutside = (event: MouseEvent) => {
@@ -376,7 +388,7 @@ export default function Page() {
   }, [isMobile, isSidebarOpen]);
 
   useEffect(() => {
-    // TODO: FIX - когда база пустая, пишешь первое сообщение - возвращает 204
+    // TODO: FIX - когда база пустая, пишешь первое сообщение - иногда возвращает 204
     if (activeThreadId) resumeStream();
   }, [activeThreadId]);
 
@@ -407,7 +419,6 @@ export default function Page() {
 
     if (!container) return;
 
-    // TODO: эту логику нужно делать нормальной для более сложного чата
     const observer = new MutationObserver(() => {
       // скроллим вниз при появлении нового сообщения
       container.scrollTop = container.scrollHeight;
@@ -427,7 +438,8 @@ export default function Page() {
       {isMounted && (
         <>
           {/* TODO (bug):
-            в хроме если ресайзишь с десктопа на мобилку и обратно, почему-то нужно рефрешить, чтобы сработало */}
+            в хроме если ресайзишь с десктопа на мобилку и обратно, почему-то нужно рефрешить, чтобы сработало.
+            В мозиле работает нормально */}
           {isMobile && (
             <div
               data-show={isSidebarOpen}
@@ -482,6 +494,7 @@ export default function Page() {
                 {m.parts.map((part, i) => {
                   const simplePart = part as ISimpleMessagePart;
 
+                  // потому что иишка сама отвечает на ошибки текстом, а видеть юзеру ошибки бэка не нужно
                   if (simplePart.state && simplePart.state === "output-error")
                     return null;
 
@@ -500,7 +513,7 @@ export default function Page() {
                           output = part.output as IShowStockPriceToolResult;
                         }
 
-                        // TODO: вынести в отдельный компонент
+                        // TODO: если будет больше инфы, то лучше вынести в отдельный компонент
                         return (
                           <div key={i} className={styles.stockWidget}>
                             <b>{output.symbol}</b>: ${output.price}

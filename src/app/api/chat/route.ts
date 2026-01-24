@@ -23,9 +23,7 @@ export async function POST(request: Request) {
 
   const thread = threadsQueries.getById(currentThreadId);
 
-  // console.log("messsssa", message);
-
-  // если не получили Id: создаём новый тред
+  // если не нашли тред - создаём новый тред
   if (!thread) {
     const firstText =
       message.parts.find((p) => p.type === "text")?.text || "Новый чат";
@@ -90,17 +88,6 @@ export async function POST(request: Request) {
     streamId: null,
   });
 
-  // const allChatMessages = messagesQueries.getByThreadId(currentThreadId);
-
-  // const apiMessages = allChatMessages
-  //   .map((m) => messageModelToApi(m))
-  //   .filter((m): m is UIMessage => m !== null);
-
-  // for (const m of apiMessages) {
-  // console.log("msg", m);
-  // console.log("parts", m.parts);
-  // }
-
   const result = streamText({
     model: openai("gpt-5-nano"),
     system: `
@@ -128,13 +115,14 @@ export async function POST(request: Request) {
     originalMessages: apiMessages,
     generateMessageId: generateId,
     onFinish: async ({ responseMessage }) => {
-      console.log("res responseMessage", responseMessage);
+      const thread = threadsQueries.getById(currentThreadId);
+
+      // если не получили тред, значит мы этот чат только что удалили
+      if (!thread) return;
 
       const assistantMsgParts: ICreateMessagePartDTO[] = [];
 
       for (const part of responseMessage.parts) {
-        // console.log("res part", part);
-
         if (part.type === "text") {
           assistantMsgParts.push({
             type: "text",
@@ -152,7 +140,6 @@ export async function POST(request: Request) {
         } else if (part.type.startsWith("tool-")) {
           const toolPart = part as IToolPart;
 
-          // TODO: тип state сделать перечислением
           if (toolPart.state === "output-available") {
             assistantMsgParts.push({
               type: toolPart.type,
@@ -161,7 +148,11 @@ export async function POST(request: Request) {
               input: JSON.stringify(toolPart.input ?? ""),
               output: JSON.stringify(toolPart.output),
             });
-          } else if (toolPart.state === "approval-requested") {
+          } else if (
+            toolPart.state === "approval-requested" ||
+            toolPart.state === "output-error" ||
+            toolPart.state === "output-denied"
+          ) {
             assistantMsgParts.push({
               type: toolPart.type,
               state: toolPart.state,
@@ -169,17 +160,6 @@ export async function POST(request: Request) {
               approval: {
                 approvalId: toolPart.approval?.id ?? "",
                 isApproved: null,
-              },
-              toolCallId: toolPart.toolCallId,
-            });
-          } else if (toolPart.state === "output-denied") {
-            assistantMsgParts.push({
-              type: toolPart.type,
-              state: toolPart.state,
-              input: JSON.stringify(toolPart.input ?? ""),
-              approval: {
-                approvalId: toolPart.approval!.id,
-                isApproved: toolPart.approval!.approved,
               },
               toolCallId: toolPart.toolCallId,
             });
