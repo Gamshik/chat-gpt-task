@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chat-Gpt "best version :)"
 
-## Getting Started
+## Start
 
-First, run the development server:
+Для того, чтобы запустить проект нужно сделать пару простых действий:
+
+1. установить зависимости командой:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun i
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. сбилдить проект командной:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+bun run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. запустить редис контейнер командой:
 
-## Learn More
+```bash
+docker up -d --build
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. добавить OPENAI_API_KEY ключик в .env (положил его в репо, чтобы сами не создавали) файлик;
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. запускайте, и радуйтесь общением с чатиком, командой:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+bun run start
+```
 
-## Deploy on Vercel
+## Seed
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+При запуске приложения инициализируется бд, после вы можете засидить её минимальными данными.
+Для начала остановите проект, затем откройте командную строку, перейдите в корень проекта и запустите:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+bun run src/lib/db/seed.ts
+```
+
+## Table
+
+Таблица лежит по пути - `public/tables/users.xlsx`, можете туда положить свою таблицу вместо этой. **ОБЯЗАТЕЛЬНО**, чтобы название файла было `users.xlsx`. Или же измените константу в файле `src/app/constants/users-table-path.const.ts`, и не забудьте перезапустить проект.
+
+## Info
+
+В целом, всё полностью реализовано и ограничений по имеющемуся функционалу нет. Есть моменты, которые можно было бы сделать лучше, но это уже скорее для прод, а не таска, ибо могли бы потребовать времени, я на такие оставил TODO комменты в проекте. Присутствуют моменты, которые мне кажутся костылями, но из-за отсутствия опыта работы с данной библиотекой, пока не смог их решить (также оставил TODO). Бывают баги, которые выскакивают иногда или же очень редко(я ниже напишу секцию с багами). Постарался выполнить как можно лучше и предусмотреть все юз кейсы.
+
+Также сделал адаптивный UI - для самых маленьких и самых больших) и постарался сделать хороший UX.
+
+Если какая-то ошибка, попробуйте создать новый чат.
+
+Я думаю тут больше не чего писать. Снизу баги, и в отдельную папку положу [ридми](use-cases\README.md) с юз кейсами (дабы не делать этот мега-большим), чтобы легче было понять что тут к чему.
+
+## Bugs
+
+1. баг связанный с работой библиотеки, [в этом месте](src/app/page.tsx#L271) если я вместо строки маршрута использую константу [ApiRoutes](src\app\constants\api-routes.const.ts), запрос стрима не идёт вообще, не знаю с чем это связано, этот, пока что, дебажить не пытался, так как уже времени нету, выпал прям под конец таска;
+2. [здесь](src/app/page.tsx#L391) каждый раз при смене или создании чата делаю запрос на существующий стрим, изредка бывало так, что когда запускаю прогу с пустой бд, запрос выдаёт 204, хотя по факту быть такого не могло, ибо стрим сохраняется в бд раньше, чем прихождит ответ на клиент. Сейчас этот баг пропал, я тестил прогу когда фулл доделал, поэтому я оставил;
+3. [тут](src\lib\db\database.ts#L25) я инициализирую бд. Если запускать проект в дев режиме (`bun run dev`), то бд инициализируется каждый запрос, точнее, пытается, так как если она есть, то ничего не делается. При запуске билда такого нет - бд инициализируется только при запуске и всё. В файлике я оставил свои попытки это пофиксить;
+4. в хроме при ресайзе страницы, как будто, не обновляется мой стейт [isMobile](src/app/page.tsx#L444) и не срабатывают функции: при ресайзе с пк на мобилку - не работает оверлей, и наоборот - работает. Первый раз вижу подобное, тоже им особо не занимался;
+5. при обновлении страницы, если есть какой-то стрим я всё равно не локаю кнопку сабмита;
+6. на мобилке подсветку чата не видно;
+7. иногда бывает такое, что библиотека выдаст респонс на работу тула без toolCallId, с этим я тоже столкнулся под конец таски прям, и тогда библиотека кидает ошибку, такое было пару раз, я сохранил логи с этой сущностью:
+
+```log
+responseMessage {
+  id: "cc3d1b75-ff22-4143-8a7b-9b8c873f159c",
+  role: "assistant",
+  parts: [
+    {
+      type: "tool-updateTableCell",
+      state: "approval-responded",
+      approval: [Object ...],
+    }
+  ],
+}
+```
+
+Ну и в целом бывают баги если моделька затупит, я использовал самую дешевую - `gpt-5-nano`, бывало глючила, могла тулы по кд юзать, котоыре даже не относились к сообщению, просто юз тула был часто в переписке, может поэтому воспринимала неправильно.
+
+Все остальные TODO - костыли или штучки, которые хотелось бы сделать, но время.
