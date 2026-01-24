@@ -1,3 +1,4 @@
+import fs from "fs";
 import * as XLSX from "xlsx";
 import { tool as createTool } from "ai";
 import { z } from "zod";
@@ -18,13 +19,13 @@ export const updateTableCell = createTool({
       .describe(
         "Целевая ячейка для записи значения. " +
           "Можно указать либо через меншон (@SheetName!A1), " +
-          "либо в явном виде: sheet=Users, cell=A1"
+          "либо в явном виде: sheet=SheetName, cell=A1",
       ),
     value: z
       .string()
       .describe(
         "Новое значение для записи в ячейку. " +
-          "Может быть текстом, числом (в виде строки) или формулой Excel (например: =SUM(A1:A5))"
+          "Может быть текстом, числом (в виде строки) или формулой Excel (например: =SUM(A1:A5))",
       ),
   }),
 
@@ -35,12 +36,12 @@ export const updateTableCell = createTool({
     value: z
       .string()
       .describe(
-        "Значение, которое было записано в ячейку после подтверждения пользователем"
+        "Значение, которое было записано в ячейку после подтверждения пользователем",
       ),
     sheet: z
       .string()
       .describe(
-        "Название листа Excel (worksheet), в котором была изменена ячейка"
+        "Название листа Excel (worksheet), в котором была изменена ячейка",
       ),
   }),
 
@@ -53,13 +54,25 @@ export const updateTableCell = createTool({
 
     const filePath = path.join(process.cwd(), USERS_TABLE_PATH);
 
-    const workbook = XLSX.readFile(filePath);
+    const readBuffer = fs.readFileSync(filePath);
+
+    const workbook = XLSX.read(readBuffer, {
+      type: "buffer",
+    });
+
     const workbookSheet = workbook.Sheets[sheet];
 
     if (!workbookSheet) throw new Error(`Sheet ${sheet} not found`);
 
     workbookSheet[cell] = { v: value, t: "s" };
-    XLSX.writeFile(workbook, filePath);
+
+    const writeBuffer = XLSX.write(workbook, {
+      type: "buffer",
+      bookType: "xlsx",
+    });
+
+    // записываем через fs
+    fs.writeFileSync(filePath, writeBuffer);
 
     return { updatedCell: cell, value, sheet };
   },

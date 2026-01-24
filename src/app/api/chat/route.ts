@@ -6,7 +6,7 @@ import {
   stepCountIs,
   generateId,
 } from "ai";
-import { threadsQueries, messagesQueries, messagePartsQueries } from "@db";
+import { threadsQueries, messagesQueries } from "@db";
 import { Headers } from "@app/constants";
 import { aiTools } from "@app/ai-tools";
 import { MessageRole } from "@models";
@@ -97,8 +97,8 @@ export async function POST(request: Request) {
   //   .filter((m): m is UIMessage => m !== null);
 
   // for (const m of apiMessages) {
-  //   console.log("msg", m);
-  //   console.log("parts", m.parts);
+  // console.log("msg", m);
+  // console.log("parts", m.parts);
   // }
 
   const result = streamText({

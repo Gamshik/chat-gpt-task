@@ -1,14 +1,17 @@
+import fs from "fs";
 import * as XLSX from "xlsx";
 import { tool as createTool } from "ai";
 import { z } from "zod";
 import path from "path";
 import { USERS_TABLE_PATH } from "@app/constants";
 import { parseTableRange } from "./utils";
+import { IGetTableRangeToolResult } from "@app/interfaces";
 
 export const getTableRange = createTool({
   description:
     "Прочитать диапазон ячеек Excel таблицы и вернуть табличные данные. " +
-    "Используется для отображения таблицы пользователю или для последующей обработки данных агентом.",
+    "Используется для отображения таблицы пользователю или для последующей обработки данных агентом." +
+    "Если результат выполнения tool успешный, НЕ описывай таблицу. Результат будет отображён интерфейсом.",
 
   inputSchema: z.object({
     range: z
@@ -16,7 +19,7 @@ export const getTableRange = createTool({
       .describe(
         "Диапазон ячеек Excel для чтения. " +
           "Можно указать через меншон (@SheetName!A1:B4) " +
-          "или в явном виде: sheet=Users, from=A1, to=B4"
+          "или в явном виде: sheet=SheetName, from=A1, to=B4",
       ),
   }),
 
@@ -24,23 +27,23 @@ export const getTableRange = createTool({
     sheet: z
       .string()
       .describe(
-        "Название листа Excel (worksheet), из которого были прочитаны данные"
+        "Название листа Excel (worksheet), из которого были прочитаны данные",
       ),
 
     range: z
       .string()
       .describe(
-        "Диапазон ячеек, который был прочитан, в формате SheetName!A1:B4"
+        "Диапазон ячеек, который был прочитан, в формате SheetName!A1:B4",
       ),
 
     rows: z
       .array(z.array(z.string()))
       .describe(
-        "Двумерный массив значений ячеек, где каждая вложенная строка соответствует строке Excel"
+        "Двумерный массив значений ячеек, где каждая вложенная строка соответствует строке Excel",
       ),
   }),
 
-  execute: async ({ range }) => {
+  execute: async ({ range }): Promise<IGetTableRangeToolResult> => {
     const rangeInfo = parseTableRange(range);
 
     if (!rangeInfo) throw new Error("Invalid range format");
@@ -49,7 +52,12 @@ export const getTableRange = createTool({
 
     const filePath = path.join(process.cwd(), USERS_TABLE_PATH);
 
-    const workbook = XLSX.readFile(filePath);
+    const buffer = fs.readFileSync(filePath);
+
+    const workbook = XLSX.read(buffer, {
+      type: "buffer",
+    });
+
     const workbookSheet = workbook.Sheets[sheet];
 
     if (!workbookSheet) throw new Error(`Sheet ${sheet} not found`);
