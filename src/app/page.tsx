@@ -590,12 +590,6 @@ export default function Page() {
                               {part.approval.approved ? "Да" : "Нет"}
                             </p>
                           );
-                        case "output-available":
-                          return (
-                            <div key={i} className={styles.systemMsg}>
-                              Тред удален
-                            </div>
-                          );
                         default:
                           return null;
                       }
