@@ -1,4 +1,4 @@
-export interface IShowStockPriceResult {
+export interface IShowStockPriceToolResult {
   symbol: string;
   price: number;
   change: number;

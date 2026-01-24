@@ -25,8 +25,10 @@ import { MarkdownText } from "@components/markdown-text";
 import { ChatSidebar } from "@components/chat-sidebar";
 import { useRouter } from "next/navigation";
 import {
+  IGetTableRangeToolResult,
   ISendChatMessageParams,
-  IShowStockPriceResult,
+  IShowStockPriceToolResult,
+  ISimpleMessagePart,
   IToolPart,
 } from "@app/interfaces";
 import {
@@ -39,6 +41,7 @@ import {
 import { useResizeWindow } from "@app/hooks";
 import { ICreateMessageDTO } from "@dto";
 import { messageModelToUi } from "@app/utils";
+import { TablePreview } from "@components/table-preview";
 
 //#region types/interfaces
 
@@ -83,7 +86,11 @@ export default function Page() {
   const { isMobile } = useResizeWindow();
 
   const router = useRouter();
-  // const searchParams = useSearchParams();
+
+  const setMentionToInput = useCallback(
+    (mention: string) => setInputValue((prev) => prev + " " + mention),
+    [],
+  );
 
   /**
    * Возвращает стили для подсветки секции
@@ -419,6 +426,8 @@ export default function Page() {
       {/* чтобы сайдбар не прыгал при инициализации на мобилке - рисуем только после инициализации */}
       {isMounted && (
         <>
+          {/* TODO (bug):
+            в хроме если ресайзишь с десктопа на мобилку и обратно, почему-то нужно рефрешить, чтобы сработало */}
           {isMobile && (
             <div
               data-show={isSidebarOpen}
@@ -441,7 +450,6 @@ export default function Page() {
             />
           </aside>
 
-          {/* TODO: исправить user select */}
           <div
             data-open={!isSidebarOpen}
             className={styles.openSidebarBtnContainer}
@@ -472,21 +480,27 @@ export default function Page() {
             >
               <div className={styles.content}>
                 {m.parts.map((part, i) => {
+                  const simplePart = part as ISimpleMessagePart;
+
+                  if (simplePart.state && simplePart.state === "output-error")
+                    return null;
+
                   switch (part.type) {
                     case "text":
                       return <MarkdownText key={i} text={part.text} />;
 
                     case "tool-showStockPrice": {
                       if (part.state === "output-available") {
-                        let output: IShowStockPriceResult;
+                        let output: IShowStockPriceToolResult;
                         if (typeof part.output === "string") {
                           output = JSON.parse(
                             part.output,
-                          ) as IShowStockPriceResult;
+                          ) as IShowStockPriceToolResult;
                         } else {
-                          output = part.output as IShowStockPriceResult;
+                          output = part.output as IShowStockPriceToolResult;
                         }
 
+                        // TODO: вынести в отдельный компонент
                         return (
                           <div key={i} className={styles.stockWidget}>
                             <b>{output.symbol}</b>: ${output.price}
@@ -567,6 +581,79 @@ export default function Page() {
                           return (
                             <div key={i} className={styles.systemMsg}>
                               Тред удален
+                            </div>
+                          );
+                        default:
+                          return null;
+                      }
+                    }
+
+                    case "tool-getTableRange": {
+                      if (part.state === "output-available") {
+                        const output =
+                          typeof part.output === "string"
+                            ? JSON.parse(part.output)
+                            : (part.output as IGetTableRangeToolResult);
+
+                        return (
+                          <TablePreview
+                            key={i}
+                            sheet={output.sheet}
+                            range={output.range}
+                            rows={output.rows}
+                            setMention={setMentionToInput}
+                          />
+                        );
+                      }
+
+                      return <div key={i}>Загрузка таблицы...</div>;
+                    }
+
+                    case "tool-updateTableCell": {
+                      switch (part.state) {
+                        case "approval-requested":
+                          return (
+                            <div key={i} className={styles.confirmBox}>
+                              <p className={styles.confitmText}>
+                                Обновить ячейку?
+                              </p>
+                              {!respondedApprovals.has(
+                                toRespondedApprovalStr(
+                                  part.type,
+                                  part.approval.id,
+                                ),
+                              ) && (
+                                <div className={styles.btnGroup}>
+                                  <button
+                                    className={clsx(styles.btn, styles.confirm)}
+                                    onClick={onConfirmApprovalClick(
+                                      part.approval.id,
+                                    )}
+                                  >
+                                    Да
+                                  </button>
+                                  <button
+                                    className={clsx(styles.btn, styles.deny)}
+                                    onClick={onDenyApprovalClick(
+                                      part.approval.id,
+                                    )}
+                                  >
+                                    Нет
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        case "approval-responded":
+                          return (
+                            <p key={i}>
+                              {part.approval.approved ? "Да" : "Нет"}
+                            </p>
+                          );
+                        case "output-available":
+                          return (
+                            <div key={i} className={styles.systemMsg}>
+                              Ячейка обновлена
                             </div>
                           );
                         default:

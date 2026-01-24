@@ -1,0 +1,130 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: #00000066;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+  border-radius: 15px;
+  padding: 15px;
+  max-height: 1200px;
+  max-width: 1200px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px #00000033;
+
+  @media screen and (max-height: 1280px) {
+    max-height: 90vh;
+  }
+
+  @media screen and (max-width: 1280px) {
+    max-width: 90vw;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+
+    .title {
+      font-size: 16px;
+    }
+
+    .closeBtn {
+      padding: 5px;
+      border-radius: 50%;
+      font-size: 14px;
+      line-height: 14px;
+      color: #000;
+
+      border: none;
+      background: none;
+      transform: rotate(0);
+      cursor: pointer;
+
+      transition: transform 0.1s ease-out;
+
+      &:hover {
+        background: #d6d6d6d7;
+        transform: rotate(180deg);
+      }
+
+      @media screen and (max-width: 768px) {
+        font-size: 12px;
+        line-height: 12px;
+      }
+    }
+  }
+
+  .saveBtn {
+    width: fit-content;
+    padding: 2px 5px;
+
+    background: none;
+    border: #b4b4b4 1px solid;
+    border-radius: 5px;
+
+    color: #3a3a3a;
+    font-size: 14px;
+
+    cursor: pointer;
+
+    &:hover {
+      background: #eeeeeed7;
+    }
+    &:disabled {
+      color: #b4b4b4;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.tableWrapper {
+  overflow: auto;
+
+  /* Для Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #bebebe transparent;
+
+  /* Для Chrome, Edge, Safari */
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #bebebe;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    cursor: pointer;
+    background: #afafaf;
+  }
+
+  .gridTable {
+    display: grid;
+
+    .gridCell {
+      border: 1px solid #e9e9e9;
+      padding: 6px 8px;
+      min-width: 80px;
+      min-height: 32px;
+      user-select: none;
+
+      font-weight: 400;
+
+      &.selected {
+        background: rgba(0, 123, 255, 0.15);
+        border-color: #007bffb0;
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { IDeleteThreadResult } from "@app/interfaces";
+import { IDeleteThreadToolResult } from "@app/interfaces";
 import { threadsQueries } from "@db";
 import { tool as createTool } from "ai";
 import { z } from "zod";
@@ -26,7 +26,7 @@ export const deleteThread = createTool({
       .describe("Человекочитаемое сообщение о результате операции удаления"),
   }),
 
-  execute: async ({ threadId }): Promise<IDeleteThreadResult> => {
+  execute: async ({ threadId }): Promise<IDeleteThreadToolResult> => {
     threadsQueries.delete(threadId);
     return { deletedId: threadId, message: "Тред успешно удален" };
   },
