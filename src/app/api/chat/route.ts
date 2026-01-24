@@ -122,6 +122,8 @@ export async function POST(request: Request) {
 
       const assistantMsgParts: ICreateMessagePartDTO[] = [];
 
+      console.log("resp", responseMessage);
+
       for (const part of responseMessage.parts) {
         if (part.type === "text") {
           assistantMsgParts.push({

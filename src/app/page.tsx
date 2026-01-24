@@ -25,6 +25,7 @@ import { MarkdownText } from "@components/markdown-text";
 import { ChatSidebar } from "@components/chat-sidebar";
 import { useRouter } from "next/navigation";
 import {
+  IExplainTableFormulaToolResult,
   IGetTableRangeToolResult,
   ISendChatMessageParams,
   IShowStockPriceToolResult,
@@ -233,7 +234,13 @@ export default function Page() {
           p.type === "tool-deleteThread" && p.approval && p.approval.approved,
       );
 
-      if (isThreadDeleted) {
+      // тоже будем учитывать чтобы подгрузить сообщения после апрува
+      const isUpdatedTableCell = res.message.parts.some(
+        (p) =>
+          p.type === "tool-updateTableCell" && p.state === "output-available",
+      );
+
+      if (isThreadDeleted || isUpdatedTableCell) {
         void loadThreads();
         // если мы удалили текущий тред, то при загрузке сообщений получим 404 и обработаем
         // TODO: выглядит как костыль, поэтому не мешало бы иначе это делать
@@ -504,14 +511,12 @@ export default function Page() {
 
                     case "tool-showStockPrice": {
                       if (part.state === "output-available") {
-                        let output: IShowStockPriceToolResult;
-                        if (typeof part.output === "string") {
-                          output = JSON.parse(
-                            part.output,
-                          ) as IShowStockPriceToolResult;
-                        } else {
-                          output = part.output as IShowStockPriceToolResult;
-                        }
+                        let output: IShowStockPriceToolResult =
+                          typeof part.output === "string"
+                            ? (JSON.parse(
+                                part.output,
+                              ) as IShowStockPriceToolResult)
+                            : (part.output as IShowStockPriceToolResult);
 
                         // TODO: если будет больше инфы, то лучше вынести в отдельный компонент
                         return (
@@ -544,11 +549,6 @@ export default function Page() {
                       break;
                     }
 
-                    // TODO: пофиксить UX:
-                    // когда юзер апрувает/денаит удаление массив messages на фронте отображает 2 сообщения - запрос и ответ иишки на действие
-                    // потом, при перезагрузке, мы видим всё общение - запрос, аппрув/денай, ответ иишки
-                    // хотелось бы, чтобы когда юзер аппрувал/денаил мы сразу видели фулл общение, без перезагрузки
-                    // пока что не понимаю почему так происходит
                     case "tool-deleteThread": {
                       switch (part.state) {
                         case "approval-requested":
@@ -610,6 +610,30 @@ export default function Page() {
                             rows={output.rows}
                             setMention={setMentionToInput}
                           />
+                        );
+                      }
+
+                      return <div key={i}>Загрузка таблицы...</div>;
+                    }
+
+                    case "tool-explainTableFormula": {
+                      if (part.state === "output-available") {
+                        const output =
+                          typeof part.output === "string"
+                            ? (JSON.parse(
+                                part.output,
+                              ) as IExplainTableFormulaToolResult)
+                            : (part.output as IExplainTableFormulaToolResult);
+
+                        if (!output.formula || !output.value) return null;
+
+                        // TODO: если будет больше инфы, то лучше вынести в отдельный компонент
+                        return (
+                          <div key={i} className={styles.formulaWidget}>
+                            <p>
+                              <b>{output.formula}</b>= ${output.value}
+                            </p>
+                          </div>
                         );
                       }
 

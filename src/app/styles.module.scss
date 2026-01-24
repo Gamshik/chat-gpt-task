@@ -179,6 +179,16 @@
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
+        .formulaWidget {
+          width: fit-content;
+          background: #fff;
+          border: 1px solid #e0e0e0;
+          border-radius: 12px;
+          padding: 15px;
+          max-width: 100%;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
         .confirmBox {
           display: flex;
           flex-direction: column;

@@ -222,6 +222,20 @@ export function TableModal({
     setContextMenu(null);
   };
 
+  // если открыто контекстное меню, вешаем событие на документ,
+  // которое при любои клике закрывает меню
+  useEffect(() => {
+    if (!contextMenu) return;
+
+    const closeContextMenu = () => setContextMenu(null);
+
+    document.addEventListener("click", closeContextMenu);
+
+    return () => {
+      document.removeEventListener("click", closeContextMenu);
+    };
+  }, [contextMenu]);
+
   // срабатывает на любое изменение данных выделения ячеек
   // вешает событие на документ, чтобы при выделении мышкой оно продолжалось, если вышли за блок
   useEffect(() => {

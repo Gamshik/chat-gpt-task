@@ -5,6 +5,7 @@ import { z } from "zod";
 import path from "path";
 import { parseTableTargetCell } from "./utils";
 import { USERS_TABLE_PATH } from "@app/constants";
+import { IExplainTableFormulaToolResult } from "@app/interfaces";
 
 export const explainTableFormula = createTool({
   description: "Объяснить формулу из Excel, как вычисляется её значение",
@@ -22,10 +23,10 @@ export const explainTableFormula = createTool({
   outputSchema: z.object({
     formula: z.string().nullable().describe("Формула, записанная в ячейке"),
 
-    value: z.number().nullable().describe("Вычисленное значение ячейки"),
+    value: z.string().nullable().describe("Вычисленное значение ячейки"),
   }),
 
-  execute: async ({ target }) => {
+  execute: async ({ target }): Promise<IExplainTableFormulaToolResult> => {
     const targetInfo = parseTableTargetCell(target);
 
     if (!targetInfo) throw new Error("Invalid range format");

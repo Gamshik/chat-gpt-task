@@ -5,3 +5,4 @@ export * from "./tool-part.interface";
 export * from "./get-table-range-tool-result.interface";
 export * from "./simple-message-part.interface";
 export * from "./approval-data.interface";
+export * from "./explain-table-formula-tool-result.interface";
